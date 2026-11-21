@@ -1,0 +1,6 @@
+{
+  "appId": "com.storytellers.dice",
+  "appName": "Storytellers Dice",
+  "webDir": "www",
+  "server": { "androidScheme": "https" }
+}
