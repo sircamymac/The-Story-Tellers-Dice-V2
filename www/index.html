@@ -1,0 +1,2324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Storyteller’s Dice</title>
+<style>
+:root{--paper:#fcf9f2;--card:#f1e8d6;--card2:#f8f2e4;--ink:#4a2f20;--soft:#8a6d4b;--gold:#b98a45;--line:#d6c7a8;--dark:#4a3f36;--robe:#5b4a8a;--trim:#8f7bd0;--hatb:#4a3a78}
+@media (prefers-color-scheme:dark){:root{--paper:#1f1914;--card:#2c241c;--card2:#251e17;--ink:#f0e4cc;--soft:#b79c75;--gold:#d3a35a;--line:#4a3d2e;--dark:#120e0a}}
+html[data-theme=christmas]{--paper:#f8f4ea;--card:#e4eddd;--card2:#f4f8ef;--ink:#1f3d2b;--soft:#8b3030;--gold:#c8962e;--line:#b9cdb4;--dark:#2d4a38;--robe:#b3202a;--trim:#ffffff;--hatb:#8c1820}
+html[data-theme=halloween]{--paper:#17101c;--card:#2a1d33;--card2:#221729;--ink:#f3e3cf;--soft:#c59a6b;--gold:#ff8a1f;--line:#4b3358;--dark:#0d0810;--robe:#3a2358;--trim:#ff8a1f;--hatb:#231436}
+html[data-theme=easter]{--paper:#fbf8fc;--card:#eae1f3;--card2:#f6f1fb;--ink:#4b3b63;--soft:#7a6a94;--gold:#e08fb5;--line:#d7cbe6;--dark:#6b5a8a;--robe:#78b896;--trim:#ffd6e8;--hatb:#5a9a7c}
+html[data-theme=valentine]{--paper:#fdf4f5;--card:#f7dde2;--card2:#fcecef;--ink:#5e1a2e;--soft:#a14a62;--gold:#d6456f;--line:#e8bcc6;--dark:#7a2a3f;--robe:#c2315a;--trim:#ffc4d3;--hatb:#8f1f40}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 Georgia,"Palatino Linotype",Palatino,serif;min-height:100vh}
+body::before{content:"";position:fixed;inset:10px;border:2px solid var(--ink);border-radius:3px 7px 4px 6px;opacity:.55;pointer-events:none}
+main{max-width:1000px;margin:0 auto;padding:34px 24px 60px}
+h1{font:italic 400 clamp(2rem,6vw,3.2rem)/1.1 "Palatino Linotype",Palatino,Georgia,serif;text-align:center;margin:8px 0 4px}
+.themepick{display:flex;align-items:center;gap:8px;color:var(--soft)}
+.themepick select{font:inherit;background:var(--card);color:var(--ink);border:1.5px solid var(--ink);border-radius:4px 8px 5px 7px;padding:8px 10px}
+.themepick select:disabled{opacity:.6}
+body,.slot,.seed,button,.chip{transition:background-color .4s,color .4s,border-color .4s}
+.sub{text-align:center;color:var(--soft);font-style:italic;margin:0 0 22px}
+.bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+button{font:inherit;cursor:pointer;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);padding:9px 18px;border-radius:4px 8px 5px 7px}
+button:hover{background:var(--card2)}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button.main{background:var(--ink);color:var(--paper);font-weight:700;padding:11px 26px}
+button.main:hover{background:var(--soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
+.slot{background:var(--card);border:1.5px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;grid-template-columns:84px 1fr;gap:6px 14px;align-items:center}
+.slot.locked{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.die{width:84px;height:84px;display:grid;place-items:center;border:0;background:none;padding:0;position:relative}
+.die .shape{position:absolute;inset:0;background:var(--dark);}
+.die .shape::after{content:"";position:absolute;inset:3px;background:var(--card2);clip-path:inherit}
+.die b{position:relative;font:700 1.55rem/1 Georgia,serif;color:var(--ink)}
+.die small{position:absolute;bottom:-2px;right:0;font-size:.68rem;color:var(--soft)}
+.s6 .shape{clip-path:polygon(8% 8%,92% 8%,92% 92%,8% 92%)}
+.s8 .shape{clip-path:polygon(50% 0,96% 50%,50% 100%,4% 50%)}
+.s10 .shape{clip-path:polygon(50% 0,94% 38%,80% 94%,20% 94%,6% 38%)}
+.s12 .shape{clip-path:polygon(50% 0,85% 12%,100% 50%,85% 88%,50% 100%,15% 88%,0 50%,15% 12%)}
+.rolling .shape,.rolling b{animation:tumble .5s linear infinite}
+.rolling b{animation-name:counter}
+@keyframes tumble{0%{transform:rotate(0) scale(1)}25%{transform:rotate(100deg) scale(1.1)}50%{transform:rotate(200deg) scale(.92)}75%{transform:rotate(290deg) scale(1.08)}100%{transform:rotate(360deg) scale(1)}}
+@keyframes counter{to{transform:none}}
+.landed .shape{animation:land .45s ease-out}
+@keyframes land{0%{transform:scale(1.3) rotate(-14deg)}60%{transform:scale(.92) rotate(5deg)}100%{transform:none}}
+.slot h2{margin:0;font-size:.98rem;color:var(--soft);font-weight:700}
+.slot p{margin:2px 0 0;font-size:1.05rem;min-height:3.2em}
+.tools{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tools button{padding:3px 11px;font-size:.85rem}
+details{grid-column:1/-1;font-size:.88rem;color:var(--soft)}
+summary{cursor:pointer;display:inline}
+details ol{margin:6px 0 0;padding-left:26px}
+details li.hit{color:var(--ink);font-weight:700}
+.seed{margin:28px 0 0;padding:18px 22px;border:1.5px solid var(--ink);border-radius:6px;background:var(--card2)}
+.seed h3{margin:0 0 6px;font-size:1.15rem}
+.seed ul{margin:0;padding-left:20px}
+.seed li{margin:4px 0}
+.words{margin-top:34px;padding-top:20px;border-top:1.5px solid var(--line)}
+.words h2{margin:0 0 4px;font:italic 400 1.5rem Palatino,Georgia,serif}
+.words .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.words select{font:inherit;background:var(--card);color:var(--ink);border:1.5px solid var(--ink);border-radius:4px;padding:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:3px 14px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 18px;border-radius:5px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+.seedwrap{display:flex;gap:18px;align-items:flex-end;margin-top:28px}
+.seedwrap .seed{flex:1;margin:0}
+.wiz{position:relative;width:132px;flex:none;display:none;transform-origin:bottom center}
+.wiz.show{display:block;animation:pop .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:none;opacity:1}}
+.wiz svg{width:100%;height:auto;display:block;overflow:visible;animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.wiz .beard{transform-origin:60px 64px;animation:sway 2.6s ease-in-out infinite}
+@keyframes sway{50%{transform:skewX(-5deg)}}
+.wiz .eyes{transform-origin:60px 58px;animation:blink 4s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.wiz .orb{transform-origin:100px 34px;animation:glow 2s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.18);opacity:.8}}
+.wiz .armL{transform-origin:44px 82px;transition:transform .3s}
+.wiz .staffg{transform-origin:100px 150px;transition:transform .3s}
+.wiz.casting .armL{animation:wave .35s ease-in-out infinite alternate}
+@keyframes wave{from{transform:rotate(-40deg)}to{transform:rotate(-75deg)}}
+.wiz.casting .staffg{animation:shake .25s linear infinite}
+@keyframes shake{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.wiz.casting .orb{animation:charge .3s ease-in-out infinite alternate}
+@keyframes charge{from{transform:scale(1.4);opacity:1}to{transform:scale(2);opacity:.85}}
+.bubble{position:absolute;left:50%;bottom:100%;transform:translateX(-30%);width:170px;margin-bottom:6px;background:var(--card2);border:1.5px solid var(--ink);border-radius:8px;padding:6px 10px;font-size:.82rem;line-height:1.3;text-align:center}
+.bubble::after{content:"";position:absolute;top:100%;left:34%;border:7px solid transparent;border-top-color:var(--ink)}
+.spark{position:absolute;width:7px;height:7px;background:var(--gold);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);pointer-events:none;animation:spark .9s ease-out forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(.2) rotate(180deg);opacity:0}}
+@media (max-width:560px){.seedwrap{flex-direction:column;align-items:center}.seedwrap .seed{width:100%}.bubble{transform:translateX(-50%)}}
+button.icon{padding:0;width:38px;height:38px;border-radius:50%;font-size:1.25rem;line-height:1}
+button.icon.spin{animation:spin .5s ease-out}
+@keyframes spin{to{transform:rotate(-360deg)}}
+.empty{color:var(--soft);font-size:.9rem;margin:0}
+#fx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+#fx .sp{position:absolute}
+#fx .sp svg{width:100%;height:auto;display:block;overflow:visible}
+.sp.fly{left:-170px;animation:flyx var(--d,24s) linear var(--dl,0s) infinite}
+.sp.hop{left:-90px;animation:flyx var(--d,34s) linear var(--dl,0s) infinite}
+@keyframes flyx{to{transform:translateX(calc(100vw + 360px))}}
+.sp.fly svg,.sp.bob svg{animation:bobY 2.4s ease-in-out infinite}
+@keyframes bobY{50%{transform:translateY(-12px)}}
+.sp.hop svg{animation:hop .7s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1.08,.9)}50%{transform:translateY(-24px) scale(.95,1.06)}}
+.sp.flit{animation:flit 16s ease-in-out infinite alternate}
+@keyframes flit{0%{transform:translate(0,0)}25%{transform:translate(9vw,-6vh)}50%{transform:translate(2vw,5vh)}75%{transform:translate(12vw,-2vh)}100%{transform:translate(4vw,7vh)}}
+.wl{animation:wingL .22s ease-in-out infinite alternate}
+.wr{animation:wingR .22s ease-in-out infinite alternate}
+@keyframes wingL{to{transform:rotate(-28deg)}}
+@keyframes wingR{to{transform:rotate(28deg)}}
+.bw{animation:bwf .18s ease-in-out infinite alternate}
+@keyframes bwf{to{transform:scaleX(.35)}}
+.lg{animation:gallop .3s ease-in-out infinite alternate}
+@keyframes gallop{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}
+.arm{animation:wave2 1.2s ease-in-out infinite alternate}
+@keyframes wave2{from{transform:rotate(-14deg)}to{transform:rotate(18deg)}}
+.glow{animation:flick 1.5s ease-in-out infinite}
+@keyframes flick{0%,100%{opacity:1}40%{opacity:.55}60%{opacity:.9}}
+.ghostfade{animation:gf 5s ease-in-out infinite}
+@keyframes gf{50%{opacity:.55}}
+.pt{position:absolute;top:0;left:var(--x);font-size:var(--s);color:var(--c);opacity:0;text-shadow:0 0 5px var(--g);animation:var(--a) var(--t) linear forwards}
+@keyframes fallp{0%{transform:translate(0,-6vh) rotate(0);opacity:0}10%{opacity:.85}90%{opacity:.85}100%{transform:translate(var(--dx),108vh) rotate(var(--r));opacity:0}}
+@keyframes risep{0%{transform:translate(0,108vh) rotate(0);opacity:0}10%{opacity:.9}90%{opacity:.8}100%{transform:translate(var(--dx),-8vh) rotate(var(--r));opacity:0}}
+.lights{position:absolute;top:13px;left:16px;right:16px;display:flex;justify-content:space-between;background:linear-gradient(#2d4a38,#2d4a38) 0 3px/100% 1.5px no-repeat}
+.lights i{width:8px;height:13px;border-radius:50% 50% 55% 55%;margin-top:3px;background:var(--b);box-shadow:0 0 9px 2px var(--b);animation:twinkle 1.8s ease-in-out infinite;animation-delay:var(--dl)}
+@keyframes twinkle{50%{opacity:.3;box-shadow:0 0 2px 0 var(--b)}}
+.fog{position:absolute;left:-20%;right:-20%;bottom:0;height:34vh;background:radial-gradient(ellipse at 25% 100%,rgba(170,140,210,.22),transparent 60%),radial-gradient(ellipse at 75% 100%,rgba(255,138,31,.12),transparent 55%);animation:fogm 26s ease-in-out infinite alternate}
+@keyframes fogm{to{transform:translateX(12%)}}
+.toast{z-index:20}
+#bookOv{position:fixed;inset:0;z-index:15;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden;background:rgba(10,6,4,0);transition:background .45s}
+#bookOv.show{display:flex}
+#bookOv.on{background:rgba(10,6,4,.74)}
+#bookfly{--P:min(86vw,340px,calc((100vh - 190px)/1.36));width:var(--P);height:calc(var(--P)*1.36);flex:none}
+.book{position:relative;width:100%;height:100%;perspective:1900px;transition:transform .95s cubic-bezier(.5,.1,.3,1);filter:drop-shadow(0 14px 22px rgba(0,0,0,.55))}
+@media (min-width:760px){.book.open{transform:translateX(calc(var(--P)/2))}}
+.leaf,.cover,.endc{position:absolute;inset:0;transform-origin:left center;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.45,.05,.25,1)}
+.leaf.flipped,.cover.flipped{transform:rotateY(-180deg)}
+.leaf{cursor:pointer}
+.cover.flipped .cfront,.leaf.flipped .front{pointer-events:none}
+.cover:not(.flipped) .face.back,.leaf:not(.flipped) .face.back{pointer-events:none}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;border-radius:2px 8px 8px 2px}
+.face.back{transform:rotateY(180deg);border-radius:8px 2px 2px 8px}
+.page{background:linear-gradient(90deg,rgba(0,0,0,.2),transparent 8%),var(--card2);color:var(--ink);padding:20px 20px 26px 26px;display:flex;flex-direction:column;box-shadow:inset 0 0 0 1px var(--line)}
+.face.back.page{background:linear-gradient(270deg,rgba(0,0,0,.2),transparent 8%),var(--card2);padding:20px 26px 26px 20px}
+.ph{display:flex;justify-content:space-between;gap:8px;font-size:.72rem;color:var(--soft);border-bottom:1px solid var(--line);padding-bottom:5px}
+.page h4{margin:8px 0 4px;font:italic 400 1.25rem Palatino,Georgia,serif}
+.brief{margin:0 0 8px;font-size:.8rem;line-height:1.4;color:var(--soft)}
+.brief em{color:var(--ink)}
+.pbody{overflow:auto;flex:1;border-top:1px solid var(--line);padding-top:6px}
+.pbody dl{margin:0}
+.pbody dt{font-size:.7rem;font-weight:700;color:var(--soft);margin-top:7px}
+.pbody dd{margin:0;font-size:.84rem;line-height:1.3}
+.pn{position:absolute;bottom:7px;left:0;right:0;text-align:center;font-size:.72rem;color:var(--soft)}
+.pdel{position:absolute;bottom:3px;left:26px;padding:1px 7px;font-size:.78rem;line-height:1.3}
+.pren{position:absolute;bottom:3px;left:62px;padding:1px 8px;font-size:.82rem;line-height:1.3}
+.pdel.armed{background:#b3202a;border-color:#b3202a;color:#fff}
+.page h4{overflow-wrap:anywhere}
+.nt,.nt *{transition:none!important}
+.pcopy{position:absolute;bottom:3px;right:12px;padding:1px 9px;font-size:.7rem}
+.leaf .face.back{align-items:center}
+.flour{font-size:4rem;color:var(--line);line-height:1;margin:auto 0 0}
+.page small{color:var(--soft);margin-bottom:auto}
+.cfront{background:linear-gradient(90deg,rgba(0,0,0,.4),transparent 10%),var(--dark);color:#f3e6c8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.cfront::before{content:"";position:absolute;inset:14px;border:2px solid var(--gold);border-radius:4px}
+.cfront::after{content:"";position:absolute;inset:20px;border:1px solid var(--gold);opacity:.6;border-radius:2px}
+.cfront h2{margin:0;font:italic 400 2.3rem Palatino,Georgia,serif;color:var(--gold);position:relative;z-index:1}
+.cfront span{position:relative;z-index:1;font-size:.9rem}
+.cfront .orn{font-size:2rem;color:var(--gold)}
+.endc .face{background:linear-gradient(90deg,rgba(0,0,0,.4),transparent 10%),var(--dark);color:#f3e6c8;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-style:italic}
+.toc{list-style:none;margin:6px 0 0;padding:0;overflow:auto;flex:1}
+.toc button{display:block;width:100%;text-align:left;border:0;border-bottom:1px dashed var(--line);background:none;border-radius:0;padding:6px 2px;font-size:.76rem;line-height:1.3;color:var(--ink)}
+.toc button:hover{background:var(--card)}
+.toc b{color:var(--soft)}
+.bk-ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s;color:#f3e6c8}
+.bk-ctl.show{opacity:1;pointer-events:auto}
+.bk-ctl button:disabled{opacity:.4;cursor:default}
+#bkInfo{min-width:120px;text-align:center}
+#nameOv{position:fixed;inset:0;z-index:18;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.6)}
+#nameOv.show{display:flex}
+.namebox{background:var(--card2);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:20px 22px;width:min(92vw,380px);animation:pop .35s cubic-bezier(.3,1.5,.5,1)}
+.namebox h3{margin:0 0 10px;font:italic 400 1.4rem Palatino,Georgia,serif}
+.namebox input{width:100%;font:inherit;background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);border-radius:4px;padding:9px 11px}
+.namebox input:focus-visible{outline:3px solid var(--gold);outline-offset:1px}
+.nrow{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.face.back.page small{text-align:center;font-size:.95rem;max-width:100%;overflow-wrap:anywhere;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.leaf,.cover,.endc,.book,#bookOv{transition-duration:.01s!important}}
+@media (prefers-reduced-motion:reduce){.rolling .shape,.landed .shape,.wiz svg,.wiz *{animation:none!important}#fx{display:none}button.icon.spin{animation:none}}
+
+/* ---------- notes ---------- */
+.notes{margin-top:22px}
+.notes .nh{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.notes h3{margin:0;font:italic 400 1.3rem Palatino,Georgia,serif}
+.notes .hint{color:var(--soft);font-size:.85rem;margin:2px 0 8px}
+.notes .nh button{padding:3px 11px;font-size:.85rem}
+.nbtns{display:flex;gap:8px}
+textarea.paper{display:block;width:100%;min-height:110px;resize:vertical;font:inherit;line-height:1.5;background:var(--card2);color:var(--ink);border:1.5px solid var(--ink);border-radius:6px;padding:12px 14px}
+textarea.paper::placeholder,.svname::placeholder{color:var(--soft);opacity:.8}
+textarea.paper:focus-visible,.svname:focus-visible{outline:3px solid var(--gold);outline-offset:1px}
+.pview{position:absolute;bottom:3px;right:62px;padding:1px 9px;font-size:.7rem}
+.pnotes{white-space:pre-wrap;font-style:italic;overflow-wrap:anywhere}
+/* ---------- full-screen seed ---------- */
+#seedOv{position:fixed;inset:0;z-index:19;display:none;flex-direction:column;background:var(--paper);color:var(--ink)}
+#seedOv.show{display:flex;animation:fadein .3s ease-out}
+@keyframes fadein{from{opacity:0}}
+.svwrap{flex:1;overflow:auto;padding:30px 24px 24px}
+.svin{max-width:760px;margin:0 auto}
+.svmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--soft);font-size:.9rem;border-bottom:1.5px solid var(--line);padding-bottom:6px}
+.svname{display:block;width:100%;font:italic 400 clamp(1.6rem,5vw,2.4rem)/1.2 Palatino,Georgia,serif;background:transparent;color:var(--ink);border:0;border-bottom:1.5px dashed var(--line);border-radius:0;padding:8px 0;margin:14px 0 4px}
+#svLines{margin:10px 0 24px}
+#svLines dt{font-size:.78rem;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.07em;margin-top:14px}
+#svLines dd{margin:2px 0 0;font-size:1.12rem}
+.svlbl{display:block;margin:0 0 6px;font:italic 400 1.3rem Palatino,Georgia,serif}
+#svNotes{min-height:240px}
+.svfoot{flex:none;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:12px 24px;border-top:1.5px solid var(--line);background:var(--card)}
+#svState{margin-right:auto;color:var(--soft);font-style:italic}
+/* ---------- tutorial scroll ---------- */
+#tutOv{position:fixed;inset:0;z-index:25;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(10,6,4,.72)}
+#tutOv.show{display:flex}
+.scroll{position:relative;width:min(94vw,560px);max-height:calc(100vh - 28px);max-height:calc(100dvh - 28px);display:flex;flex-direction:column;filter:drop-shadow(0 14px 24px rgba(0,0,0,.55))}
+.rod{position:relative;z-index:2;flex:none;height:26px;margin:0 6px;border-radius:13px;border:1.5px solid var(--gold);background:linear-gradient(180deg,rgba(255,255,255,.2),transparent 45%,rgba(0,0,0,.35)),var(--dark)}
+.rod::before,.rod::after{content:"";position:absolute;top:-6px;width:18px;height:36px;border-radius:9px;background:linear-gradient(90deg,rgba(255,255,255,.3),transparent 60%,rgba(0,0,0,.25)),var(--gold);border:1.5px solid var(--ink)}
+.rod::before{left:-9px}.rod::after{right:-9px}
+.sheet{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin:-3px 20px;border-inline:1.5px solid var(--line);background:linear-gradient(90deg,rgba(0,0,0,.14),transparent 7%,transparent 93%,rgba(0,0,0,.14)),var(--card2);color:var(--ink)}
+.sheet.unrolling{overflow:hidden;animation:unroll .85s cubic-bezier(.3,.8,.3,1)}
+@keyframes unroll{from{max-height:0}}
+.parch{flex:1;min-height:0;overflow:auto;padding:26px 24px 10px;background:radial-gradient(ellipse at 50% 0,rgba(255,255,255,.1),transparent 60%)}
+.parch:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.torn{text-align:center;font-size:1.8rem;line-height:1;color:var(--gold)}
+.parch h2{margin:6px 0 4px;text-align:center;font:italic 400 clamp(1.7rem,6vw,2.2rem)/1.15 Palatino,Georgia,serif}
+.tintro{text-align:center;color:var(--soft);font-style:italic;margin:0 0 6px}
+.minis{display:flex;justify-content:center;gap:14px;margin:14px 0 4px}
+.die.mini{width:46px;height:46px}
+.die.mini b{font-size:1rem}
+.tstep{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
+.tstep h3{margin:0 0 4px;font-size:1.08rem;display:flex;align-items:center;gap:10px}
+.tn{flex:none;width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;font-size:.85rem;background:var(--ink);color:var(--paper)}
+.tstep p{margin:0;font-size:.97rem;line-height:1.5}
+.tstep b{color:var(--ink)}
+.tfoot{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 24px 14px;border-top:1px solid var(--line)}
+.tfoot small{color:var(--soft);font-style:italic}
+.toast{z-index:40}
+@media (prefers-reduced-motion:reduce){.sheet.unrolling,#seedOv.show{animation:none}}
+
+/* ---------- tabs & battle maps ---------- */
+.tabs{max-width:1280px;margin:0 auto;padding:22px 24px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.tab.on{background:var(--ink);color:var(--paper);font-weight:700}
+#mapPage{max-width:1280px}
+.mbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin:0 0 16px}
+.mbar select,.side select,.side input[type=number]{font:inherit;background:var(--card);color:var(--ink);border:1.5px solid var(--ink);border-radius:4px;padding:7px}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1.5px}.seg button:first-child{border-radius:4px 0 0 4px;margin:0}.seg button:last-child{border-radius:0 8px 8px 0}
+.seg button.on{background:var(--ink);color:var(--paper);font-weight:700}
+.mp{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+@media (max-width:900px){.mp{grid-template-columns:1fr}}
+.mapbox{position:relative;border:2px solid var(--ink);border-radius:4px;background:var(--card);touch-action:none;line-height:0;overflow:hidden}
+.mapbox canvas{width:100%;height:auto;display:block}
+.tok{position:absolute;transform:translate(-50%,-50%);aspect-ratio:1;border-radius:50%;border:max(2px,calc(var(--cell,40px)*.07)) solid var(--r,#999);background:radial-gradient(circle at 35% 30%,var(--card2),var(--card));display:grid;place-items:center;cursor:grab;user-select:none;touch-action:none;box-shadow:0 2px 5px rgba(0,0,0,.5),0 0 0 1px var(--gold);overflow:hidden;line-height:1}
+.tok.drag{cursor:grabbing;z-index:5;box-shadow:0 6px 12px rgba(0,0,0,.5)}
+.tok span{font-size:calc(var(--cell,40px)*.58)}
+.tok img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.tok .bd{position:absolute;right:3%;bottom:0;font-style:normal;font-size:calc(var(--cell,40px)*.3)}
+.side{background:var(--card);border:1.5px solid var(--line);border-radius:6px;padding:14px;position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
+.side h3{margin:0 0 8px;font:italic 400 1.3rem Palatino,Georgia,serif}
+.side hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.side select{width:100%}
+.trow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.trow button{padding:5px 12px;font-size:.88rem}
+.side .main{width:100%}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px;margin-top:8px;max-height:260px;overflow:auto;padding:2px}
+.tk{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;font-size:.62rem;line-height:1.1;border-radius:6px;text-align:center;border-width:1.5px;border-color:var(--line);background:var(--card2)}
+.tk.sel{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold);background:var(--card)}
+.tk .ti{width:38px;height:38px;border-radius:50%;border:3px solid var(--r,#999);display:grid;place-items:center;font-size:1.3rem;line-height:1;overflow:hidden;background:var(--paper)}
+.tk .ti img{width:100%;height:100%;object-fit:cover}
+.tk .x{position:absolute;top:0;right:2px;font-size:.8rem;color:var(--soft)}
+.hint2{color:var(--soft);font-size:.82rem;margin:6px 0 0}
+#drawOv{position:fixed;inset:0;z-index:22;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.7);padding:10px}
+#drawOv.show{display:flex}
+.dbox{background:var(--card2);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:16px;width:min(96vw,640px);max-height:96vh;overflow:auto}
+.dbox h3{margin:0 0 10px;font:italic 400 1.4rem Palatino,Georgia,serif}
+.dwrap{display:flex;gap:14px;flex-wrap:wrap}
+#dCv{width:min(100%,288px);aspect-ratio:1;background:#fff;border:2px solid var(--ink);border-radius:50%;cursor:crosshair;touch-action:none}
+.dtools{flex:1;min-width:200px}
+.dtools .trow button.on{background:var(--ink);color:var(--paper)}
+.pal{display:grid;grid-template-columns:repeat(8,26px);gap:4px;margin:8px 0}
+.sw{width:26px;height:26px;padding:0;border-radius:4px;border:1.5px solid var(--ink)}
+.sw.on{outline:3px solid var(--gold);outline-offset:1px}
+.dbox input[type=text]{width:100%;font:inherit;background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);border-radius:4px;padding:8px}
+
+[hidden]{display:none!important}
+#msOv{position:fixed;inset:0;z-index:23;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.6)}
+#msOv.show{display:flex}
+.namebox label{display:block;margin:0 0 4px;font-size:.95rem;color:var(--soft)}
+.namebox select{width:100%;font:inherit;background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);border-radius:4px;padding:9px 11px}
+#mlOv{position:fixed;inset:0;z-index:21;display:none;flex-direction:column;background:var(--paper);color:var(--ink)}
+#mlOv.show{display:flex;animation:fadein .3s ease-out}
+.mlhead{flex:none;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 24px;border-bottom:1.5px solid var(--line);background:var(--card)}
+.mlhead h2{margin:0;flex:1;min-width:140px;font:italic 400 1.5rem Palatino,Georgia,serif}
+.mltabs{display:flex}.mltabs button{border-radius:0;margin-left:-1.5px}.mltabs button:first-child{border-radius:4px 0 0 4px;margin:0}.mltabs button:last-child{border-radius:0 8px 8px 0}
+.mltabs button.on{background:var(--ink);color:var(--paper);font-weight:700}
+.mlbody{flex:1;overflow:auto;padding:22px 24px}
+.mlgrid{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.mli{background:var(--card);border:1.5px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.mli img{width:100%;display:block;cursor:pointer;aspect-ratio:1;object-fit:cover;background:var(--card2)}
+.mli .mm{padding:10px 12px;flex:1}.mli b{display:block;font-size:1.05rem;overflow-wrap:anywhere}.mli small{display:block;color:var(--soft)}
+.mli .mb{display:flex;gap:8px;padding:0 12px 12px}
+#svMapList .chips{margin-bottom:22px}
+#svMapList .chip{cursor:pointer;color:var(--ink)}
+.tk .ti{position:relative}
+.tbd{position:absolute;right:-1px;bottom:-1px;font-style:normal;font-size:.6rem;line-height:1}
+
+/* ---------- phone layout for the tale book ---------- */
+@media (max-width:760px){
+ #bookOv{gap:10px;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+ #bookfly{--P:min(94vw,440px,calc((100vh - 150px)/1.36));--P:min(94vw,440px,calc((100dvh - 150px)/1.36))}
+ .page{padding:18px 16px 58px 22px}
+ .face.back.page{padding:18px 22px 58px 16px}
+ .page h4{font-size:1.35rem}
+ .brief{font-size:.92rem}
+ .ph{font-size:.8rem}
+ .pbody dt{font-size:.78rem}.pbody dd{font-size:1rem}
+ .pdel,.pren,.pview,.pcopy{bottom:8px;min-height:38px;min-width:42px;padding:4px 10px;font-size:.9rem}
+ .pdel{left:14px}.pren{left:64px}.pcopy{right:14px}.pview{right:78px}
+ .pn{bottom:18px}
+ .toc button{padding:12px 4px;font-size:.9rem}
+ .bk-ctl{gap:8px;width:100%;padding:0 8px}
+ .bk-ctl button{min-height:44px;padding:8px 14px}
+ #bkInfo{min-width:90px;font-size:.9rem}
+ .svfoot,.mlhead{padding-left:14px;padding-right:14px}
+ .svfoot button,.mlhead button{min-height:42px}
+ .svwrap,.mlbody{padding-left:16px;padding-right:16px}
+}
+
+/* ---------- custom art ---------- */
+.ic{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.25em;margin-right:.4em;line-height:0}
+.ic svg{width:100%;height:100%;display:block}
+.pdel .ic,.pren .ic{margin:0}
+.torn svg{width:40px;height:40px}
+.tok .ta{width:78%;height:78%;object-fit:contain}
+.tok img.bd{position:absolute;right:3%;bottom:3%;width:34%;height:34%;object-fit:contain}
+.tk .ti .ta{width:80%;height:80%;object-fit:contain}
+.tk .ti img.tbd{position:absolute;right:0;bottom:0;width:15px;height:15px;object-fit:contain}
+.tf{animation:tfl 1.2s ease-in-out infinite alternate}
+@keyframes tfl{from{transform:scale(1,.93)}to{transform:scale(1.08,1.08)}}
+.flickv{position:absolute;inset:0;background:radial-gradient(ellipse at 0% 100%,rgba(255,150,50,.2),transparent 45%),radial-gradient(ellipse at 100% 100%,rgba(255,150,50,.16),transparent 45%);animation:flick 3.2s ease-in-out infinite}
+.aura{position:absolute;inset:0;background:radial-gradient(ellipse at 50% -10%,var(--au,rgba(255,255,255,.3)),transparent 55%);animation:glow2 7s ease-in-out infinite alternate}
+@keyframes glow2{from{opacity:.35}to{opacity:1}}
+/* ---------- dice labels ---------- */
+.slot{grid-template-columns:96px 1fr;gap:6px 18px}
+.die{margin:0 6px 34px}
+.die b{font:700 1.75rem/1 Palatino,"Palatino Linotype","Book Antiqua",Georgia,serif;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.die small{bottom:auto;right:auto;top:calc(100% + 10px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;white-space:nowrap;font:700 .74rem/1 Palatino,"Palatino Linotype","Book Antiqua",Georgia,serif;letter-spacing:.22em;text-transform:uppercase;color:var(--soft)}
+.die small::before,.die small::after{content:"";width:10px;height:1px;background:var(--gold)}
+.slot h2{display:flex;align-items:center;gap:10px;font:italic 700 1.14rem/1.2 Palatino,"Palatino Linotype","Book Antiqua",Georgia,serif;letter-spacing:.03em;color:var(--ink)}
+.slot h2::after{content:"";flex:0 0 30px;height:1px;background:var(--gold)}
+.slot p{font-size:1.08rem;line-height:1.45}
+
+/* ---------- bigger dice and custom entries ---------- */
+.s16 .shape{clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)}
+.s20 .shape{clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
+.s24 .shape{clip-path:polygon(50% 0,79% 9%,97% 35%,97% 65%,79% 91%,50% 100%,21% 91%,3% 65%,3% 35%,21% 9%)}
+#addOv{position:fixed;inset:0;z-index:23;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.6)}
+#addOv.show{display:flex}
+#addOv textarea.paper{min-height:90px}
+details li.cus{font-style:italic}
+.rmcus{margin-left:8px;width:22px;height:22px;padding:0;border-radius:50%;line-height:1;font-size:.9rem;vertical-align:middle}
+.tools{flex-wrap:wrap}
+
+/* ---------- toggles in the full table ---------- */
+details ol{list-style:none;padding-left:0;margin:6px 0 0;counter-reset:n}
+details li{display:flex;align-items:flex-start;gap:6px;padding:5px 2px;border-bottom:1px dashed var(--line)}
+details li .tg{display:flex;gap:10px;align-items:flex-start;flex:1;cursor:pointer}
+details li .tg input{position:absolute;opacity:0;width:0;height:0}
+details li .tgsw{flex:none;width:34px;height:20px;border-radius:10px;background:var(--line);border:1.5px solid var(--ink);position:relative;transition:background .2s;margin-top:1px}
+details li .tgsw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--ink);transition:transform .2s}
+details li .tg input:checked+.tgsw{background:var(--gold)}
+details li .tg input:checked+.tgsw::after{transform:translateX(14px)}
+details li .tg input:focus-visible+.tgsw{outline:3px solid var(--gold);outline-offset:2px}
+details li.off .tx{opacity:.5}
+details li.on .tx::before{counter-increment:n;content:counter(n) ". ";font-weight:700;color:var(--soft)}
+.tbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0 2px;color:var(--soft);font-size:.9rem}
+.tbar button{padding:3px 11px;font-size:.85rem}
+@media (prefers-reduced-motion:reduce){details li .tgsw,details li .tgsw::after{transition:none}}
+.rmcus.armed{width:auto;border-radius:11px;padding:0 9px;font-size:.75rem}
+</style>
+</head>
+<body>
+<nav class="tabs" aria-label="Pages">
+  <button class="tab on" data-p="dice"><i class="ic" data-g="d20"></i>Story Dice</button>
+  <button class="tab" data-p="map"><i class="ic" data-g="map"></i>Battle Maps</button>
+  <label class="themepick">Theme <select id="theme"></select></label>
+</nav>
+<main id="dicePage">
+  <h1>The Storyteller’s Dice</h1>
+  <p class="sub">Roll a plot hook, a motive, a twist and more. Lock what you like, reroll the rest.</p>
+  <div class="bar">
+    <button class="main" id="rollAll">Roll all dice</button>
+    <button id="save">Save seed</button>
+    <button id="mySeeds">My Seeds</button>
+    <button id="lockAll">Lock all</button>
+    <button id="unlock">Unlock all</button>
+    <button id="reset" class="icon" aria-label="Reset all dice" title="Reset all dice">↻</button>
+    <button id="help" class="icon" aria-label="How this app works" title="How this app works">?</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="seedwrap">
+    <div class="wiz" id="wiz" aria-hidden="true">
+      <div class="bubble" id="bubble">Roll the dice and I’ll weave your tale.</div>
+      <svg viewBox="0 0 120 150">
+        <ellipse cx="60" cy="148" rx="36" ry="5" fill="#000" opacity=".18"/>
+        <g class="staffg">
+          <rect x="98" y="40" width="4" height="110" rx="2" fill="#7a5632"/>
+          <g class="orb"><circle cx="100" cy="34" r="12" fill="#ffd36b" opacity=".35"/><circle cx="100" cy="34" r="7" fill="#ffe9a8"/></g>
+        </g>
+        <path d="M30 148 L42 72 Q60 62 78 72 L90 148 Z" style="fill:var(--robe)"/>
+        <path d="M30 148 L33 134 L87 134 L90 148 Z" style="fill:var(--trim)"/>
+        <rect x="44" y="96" width="32" height="5" fill="#b98a45"/>
+        <path d="M76 80 Q92 86 98 98 L92 102 Q84 94 74 92 Z" style="fill:var(--robe)"/>
+        <circle cx="96" cy="100" r="5" fill="#f0cba0"/>
+        <g class="armL"><path d="M44 80 Q30 86 26 100 L33 104 Q38 94 48 92 Z" style="fill:var(--robe)"/><circle cx="29" cy="102" r="5" fill="#f0cba0"/></g>
+        <g class="beard"><path d="M45 62 Q60 70 75 62 Q72 96 60 112 Q48 96 45 62 Z" fill="#f4f1ea" stroke="#d9d3c4"/></g>
+        <circle cx="60" cy="58" r="15" fill="#f0cba0"/>
+        <path d="M46 64 Q60 76 74 64 Q60 68 46 64 Z" fill="#f4f1ea"/>
+        <g class="eyes"><circle cx="54" cy="56" r="2" fill="#2b1d12"/><circle cx="66" cy="56" r="2" fill="#2b1d12"/></g>
+        <path d="M52 46 Q60 50 68 46 L66 42 Q60 45 54 42 Z" fill="#f4f1ea"/>
+        <ellipse cx="60" cy="46" rx="32" ry="7" style="fill:var(--hatb)"/>
+        <path d="M38 45 Q50 40 60 8 Q64 26 82 45 Q60 50 38 45 Z" style="fill:var(--robe)"/>
+        <path d="M60 8 Q72 8 76 20 Q68 14 62 18 Z" style="fill:var(--robe)"/>
+        <path d="M40 43 Q60 49 80 43 L81 39 Q60 45 39 39 Z" fill="#b98a45"/>
+        <polygon points="58,30 60,25 62,30 67,31 63,34 64,39 60,36 56,39 57,34 53,31" fill="#ffd36b"/>
+      </svg>
+    </div>
+    <section class="seed" id="seed" aria-live="polite"><h3>Your story seed</h3><p>Roll the dice to begin.</p></section>
+  </div>
+
+  <section class="notes">
+    <div class="nh"><h3><label for="notes">Notes</label></h3><span class="nbtns"><button id="notesSave" type="button">Save notes</button><button id="notesClear" type="button">Clear</button></span></div>
+    <p class="hint">Jot down names, ideas and twists. Press “Save notes” to add them to this seed in your book. They are also saved when you press “Save seed”.</p>
+    <textarea class="paper" id="notes" maxlength="4000" placeholder="Write your own notes for this story seed…"></textarea>
+  </section>
+
+  <section class="words">
+    <h2>Wandering Wordsmith</h2>
+    <div style="color:var(--soft)">Pick a scene type and draw fresh descriptive phrases.</div>
+    <div class="row">
+      <select id="cat" aria-label="Scene type"></select>
+      <button id="draw">Draw words</button>
+    </div>
+    <div class="chips" id="chips" aria-live="polite"></div>
+  </section>
+</main>
+<main id="mapPage" hidden>
+  <h1>Battle Maps</h1>
+  <p class="sub" id="mapSub">Generate a random map, then fill it with tokens to build your encounter.</p>
+  <div class="mbar">
+    <div class="seg" id="szSeg" role="group" aria-label="Map size"><button data-sz="S">Small</button><button data-sz="M" class="on">Medium</button><button data-sz="L">Large</button></div>
+    <select id="biome" aria-label="Biome"><option value="dungeon">Dungeon</option><option value="tavern">Tavern</option><option value="plains">Plains</option><option value="forest">Forest</option><option value="mountains">Mountains</option><option value="swamp">Swamp</option></select>
+    <button class="main" id="mGen">Generate map</button>
+    <button id="mGrid" aria-pressed="true">Grid: on</button>
+    <button id="mClear">Clear tokens</button>
+    <select id="exFmt" aria-label="Export format"><option value="png">PNG</option><option value="jpeg">JPEG</option></select><button id="mExport">Export</button>
+    <button id="mSave">Save map</button><button id="mLib">My maps</button>
+    <span id="mapTag" class="hint2" aria-live="polite"></span>
+  </div>
+  <div class="mp">
+    <div class="mapbox" id="mapBox"><canvas id="mapCv" aria-label="Battle map"></canvas></div>
+    <aside class="side" aria-label="Token sidebar">
+      <h3>Token Library</h3>
+      <select id="tCat" aria-label="Token category"></select>
+      <div class="tgrid" id="tGrid"></div>
+      <div class="trow"><button id="tAll">Select all</button><button id="tNone">Select none</button><span id="tCount"></span></div>
+      <div class="trow"><label>Copies each <input type="number" id="tCopies" min="1" max="10" value="1" style="width:60px"></label></div>
+      <button id="tAdd" style="width:100%;margin-bottom:8px"><i class="ic" data-g="plus"></i>Add token to map</button>
+      <button class="main" id="tScatter">Scatter selected on map</button>
+      <hr>
+      <h3>Make a token</h3>
+      <div class="trow"><button id="tRand"><i class="ic" data-g="dice"></i>Random</button><button id="tDraw"><i class="ic" data-g="brush"></i>Draw</button><button id="tUp"><i class="ic" data-g="upload"></i>Upload</button></div>
+      <input type="file" id="tFile" accept="image/*" hidden>
+      <p class="hint2">Click a token to select it and make it the active one. <b>Add token</b> places the active token on the map, and <b>Scatter</b> places every selected token at random. Drag any token on the map to move it freely. Double-click or right-click a token on the map to remove it.</p>
+    </aside>
+  </div>
+</main>
+<div id="msOv" role="dialog" aria-modal="true" aria-labelledby="msT">
+  <div class="namebox"><h3 id="msT">Save battle map</h3>
+    <label for="msName">Map name</label>
+    <input id="msName" maxlength="40" placeholder="e.g. The Sunken Crypt" autocomplete="off">
+    <label for="msTale" style="margin-top:12px">Attach to a tale</label>
+    <select id="msTale"></select>
+    <div class="nrow"><button id="msCancel">Cancel</button><button id="msNew" hidden>Save as new</button><button class="main" id="msOk">Save map</button></div>
+  </div>
+</div>
+<div id="mlOv" role="dialog" aria-modal="true" aria-labelledby="mlT">
+  <div class="mlhead">
+    <div class="mltabs" id="mlTabs"><button id="mlTales"><i class="ic" data-g="book"></i>Tales</button><button class="on" aria-current="page"><i class="ic" data-g="map"></i>Maps</button></div>
+    <h2 id="mlT">All maps</h2>
+    <button id="mlClose">Close</button>
+  </div>
+  <div class="mlbody" id="mlList"></div>
+</div>
+<div id="drawOv" role="dialog" aria-modal="true" aria-labelledby="dT">
+  <div class="dbox"><h3 id="dT">Draw your token</h3>
+    <div class="dwrap">
+      <canvas id="dCv" width="256" height="256"></canvas>
+      <div class="dtools">
+        <div class="trow" id="dTools"><button data-t="pencil"><i class="ic" data-g="pencil"></i>Pencil</button><button data-t="brush" class="on"><i class="ic" data-g="brush"></i>Brush</button><button data-t="spray"><i class="ic" data-g="spray"></i>Spray</button><button data-t="eraser"><i class="ic" data-g="eraser"></i>Eraser</button><button data-t="fill"><i class="ic" data-g="bucket"></i>Fill</button></div>
+        <label>Size <select id="dSz"><option>2</option><option>4</option><option selected>8</option><option>14</option><option>24</option></select></label>
+        <div class="pal" id="dPal"></div>
+        <label>Custom <input type="color" id="dCol" value="#000000"></label>
+        <div class="trow"><button id="dUndo">Undo</button><button id="dClr">Clear</button></div>
+        <input type="text" id="dName" maxlength="24" placeholder="Token name" aria-label="Token name">
+      </div>
+    </div>
+    <div class="nrow"><button id="dCancel">Cancel</button><button class="main" id="dSave">Save token</button></div>
+  </div>
+</div>
+<div id="nameOv" role="dialog" aria-modal="true" aria-labelledby="nameT">
+  <div class="namebox">
+    <h3 id="nameT">Name this seed</h3>
+    <input id="nameIn" maxlength="40" placeholder="e.g. The Moonlit Heist" autocomplete="off" aria-label="Seed name">
+    <div class="nrow"><button id="nameCancel">Cancel</button><button class="main" id="nameOk">Save seed</button></div>
+  </div>
+</div>
+<div id="bookOv" role="dialog" aria-modal="true" aria-label="My Seeds">
+  <div id="bookfly"><div class="book" id="book"></div></div>
+  <div class="bk-ctl" id="bkCtl">
+    <button id="bkPrev" aria-label="Previous page">‹ Prev</button>
+    <span id="bkInfo" aria-live="polite"></span>
+    <button id="bkNext" aria-label="Next page">Next ›</button>
+    <button id="bkMaps"><i class="ic" data-g="map"></i>Maps</button>
+    <button id="bkClose">Close book</button>
+  </div>
+</div>
+<div id="seedOv" role="dialog" aria-modal="true" aria-labelledby="svT">
+  <div class="svwrap"><div class="svin">
+    <div class="svmeta"><span id="svLabel"></span><span id="svDate"></span></div>
+    <h2 id="svT" class="svlbl" style="margin-top:14px">Seed title</h2>
+    <input class="svname" id="svName" maxlength="40" placeholder="Give this seed a name" autocomplete="off" aria-labelledby="svT">
+    <dl id="svLines"></dl>
+    <div id="svMapList"></div>
+    <label class="svlbl" for="svNotes">Notes</label>
+    <textarea class="paper" id="svNotes" maxlength="4000" placeholder="Add your own notes to this seed…"></textarea>
+  </div></div>
+  <div class="svfoot">
+    <span id="svState" aria-live="polite"></span>
+    <button id="svMaps"><i class="ic" data-g="map"></i>View battle maps</button>
+    <button id="svCopy">Copy</button>
+    <button id="svClose">Close</button>
+    <button class="main" id="svSave">Save changes</button>
+  </div>
+</div>
+<div id="tutOv" role="dialog" aria-modal="true" aria-labelledby="tutT">
+  <div class="scroll">
+    <div class="rod"></div>
+    <div class="sheet" id="tutSheet">
+      <div class="parch" id="tutParch" tabindex="0">
+        <div class="torn" id="tutOrn" aria-hidden="true">✦</div>
+        <h2 id="tutT">How the Dice Work</h2>
+        <p class="tintro" id="tutIntro"></p>
+        <div class="minis" aria-hidden="true">
+          <span class="die mini s6"><span class="shape"></span><b>6</b></span>
+          <span class="die mini s8"><span class="shape"></span><b>8</b></span>
+          <span class="die mini s10"><span class="shape"></span><b>10</b></span>
+          <span class="die mini s12"><span class="shape"></span><b>12</b></span>
+        </div>
+        <section class="tstep"><h3><span class="tn">1</span>Roll the dice</h3>
+          <p>Six dice build a story seed: <b>plot hook</b>, <b>villain motive</b>, <b>plot twist</b>, <b>complication</b>, <b>location</b> and <b>reward</b>. Tap a single die to roll it, or press <b>Roll all dice</b> to roll them all at once.</p></section>
+        <section class="tstep"><h3><span class="tn">2</span>Lock and reroll</h3>
+          <p>Love a result? Press <b>Lock</b> on that die and it will stay put while you roll the rest. <b>Reroll</b> redoes just one die, and <b>Lock all</b> or <b>Unlock all</b> do what they say. Open <b>See the full table</b> on any die to read every possible result. Each die has a fixed size (d20, d12, d10, d8, d10 and d8), but its table holds many more entries. Switch entries on or off to choose which ones the die can roll, up to the size of the die. Press × twice to remove an entry for good, and Restore removed brings built-in entries back. <b>Add yours</b> writes your own entries into a table, and your choices are kept for that theme.</p></section>
+        <section class="tstep"><h3><span class="tn">3</span>Read your seed</h3>
+          <p>Your rolled results gather in the <b>story seed</b> box below the dice, where the wizard conjures them for you.</p></section>
+        <section class="tstep"><h3><span class="tn">4</span>Add your own notes</h3>
+          <p>Use the <b>Notes</b> box under the seed to write names, ideas and twists of your own. Press <b>Save notes</b> to add them to the seed in your book, or just press <b>Save seed</b> to save everything together.</p></section>
+        <section class="tstep"><h3><span class="tn">5</span>Save to the seed book</h3>
+          <p>Press <b>Save seed</b>, give it a name, and it joins <b>My Seeds</b>. Open the book to flip through your tales with the <b>Prev</b> and <b>Next</b> buttons or the arrow keys, or tap an entry on the contents page to jump straight to it.</p></section>
+        <section class="tstep"><h3><span class="tn">6</span>Open a seed full screen</h3>
+          <p>On any page of the book, press <b>Open</b> to see that seed full screen. Edit its title, write more notes, then press <b>Save changes</b>. On the page itself, the pen button renames, the bin deletes (press twice to confirm) and <b>Copy</b> copies the seed with its notes.</p></section>
+        <section class="tstep"><h3><span class="tn">7</span>Wandering Wordsmith</h3>
+          <p>Stuck for a description? Pick a scene type near the bottom of the page and press <b>Draw words</b> for fresh phrases to borrow.</p></section>
+        <section class="tstep"><h3><span class="tn">8</span>Battle Maps</h3>
+          <p>Use the <b>Battle Maps</b> tab to generate a random map. Pick a size and a biome, then fill it using the token sidebar: choose from the library, make a <b>Random</b> token, <b>Draw</b> your own or <b>Upload</b> an image, press <b>Add token</b> to place one or <b>Scatter</b> to drop your selection across the map, then drag tokens anywhere. <b>Export</b> saves a PNG or JPEG. <b>Save map</b> keeps it in the map library, optionally attached to a tale: open the book and press <b>Maps</b>, or press <b>View battle maps</b> inside a tale.</p></section>
+        <section class="tstep"><h3><span class="tn">9</span>Themes and reset</h3>
+          <p>The <b>Theme</b> menu changes the tables, words, colors and scenery. You can switch themes between rolls, and this scroll changes with them. The <b>↻</b> button clears the dice and your notes, and the <b>?</b> button brings this scroll back any time.</p></section>
+      </div>
+      <div class="tfoot"><button class="main" id="tutOk">Begin the tale</button><small>Press the ? button to read this again.</small></div>
+    </div>
+    <div class="rod"></div>
+  </div>
+</div>
+<div id="addOv" role="dialog" aria-modal="true" aria-labelledby="addT">
+  <div class="namebox"><h3 id="addT">Add a suggestion</h3>
+    <label for="addIn">Your suggestion</label>
+    <textarea class="paper" id="addIn" maxlength="160" rows="3" placeholder="Write a new entry for this table…"></textarea>
+    <p class="hint2" id="addHint"></p>
+    <div class="nrow"><button id="addDone">Done</button><button class="main" id="addOk">Add suggestion</button></div>
+  </div>
+</div>
+<div id="fx" aria-hidden="true"></div>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const TABLES=[
+ {key:"hook",name:"Plot hook",sides:12,items:[
+  "A letter arrives sealed with a wax sigil no one recognizes","A village goes silent overnight, its people simply gone","A dying stranger presses a key into your hand and a name","An old debt comes due, called in by someone long thought dead","A map surfaces showing a place that shouldn’t exist","A noble offers a fortune for a task they refuse to explain","A prophecy names one of you, whether you believe it or not","A caravan is found abandoned, meals half-eaten, no signs of struggle","A childhood friend arrives begging for help, pursued by something unseen","An ancient bell rings for the first time in a century","A rival adventuring party goes missing chasing the same rumor","A festival is disrupted by an omen only you seem to notice"]},
+ {key:"motive",name:"Villain motive",sides:10,items:[
+  "Revenge for a wrong done generations ago","A desperate bid to save someone they love","Genuine belief they are the hero of this story","Greed dressed up as necessity","Fear of a greater threat only they can see coming","Loyalty to a cause that has curdled into fanaticism","A twisted sense of justice for the wronged","Ambition to reshape the world in their image","A pact made in desperation, now impossible to break","Grief that has calcified into cruelty"]},
+ {key:"twist",name:"Plot twist",sides:8,items:[
+  "The ally was working against you from the start","The villain was trying to prevent a worse catastrophe","The quest-giver withheld a crucial, damning truth","The macguffin is cursed, sentient, or both","Two factions you trusted are secretly the same one","The “monster” is the true victim of this story","A past choice comes back with unexpected consequences","The mentor figure has been dead or replaced for some time"]},
+ {key:"complication",name:"Complication",sides:6,items:[
+  "A storm, flood, or landslide cuts off the only route","Supplies are stolen, spoiled, or unexpectedly short","A trusted contact turns out to be unreachable or gone","Local authorities take sudden and unwelcome interest","An old injury or curse flares at the worst moment","A rival party arrives chasing the same goal"]},
+ {key:"place",name:"Location to discover",sides:10,items:[
+  "A sunken temple, drained by some recent upheaval","A market that only opens under a particular moon","An abandoned keep now claimed by something feral","A village built atop the bones of something ancient","A library that rearranges itself when unwatched","A bridge that appears only in fog or mist","A grove where the trees remember every visitor","An inn that exists slightly out of step with time","A mine shaft that goes far deeper than any map shows","A shrine tended by the last of a forgotten order"]},
+ {key:"reward",name:"Reward and consequence",sides:6,items:[
+  "A boon freely given, with strings that surface later","Coin and favor, but a new enemy made in the process","Knowledge that changes how the party sees the world","A title or reputation, welcome and inconvenient by turns","An item of power with a will and price of its own","Peace bought at a cost only one party member truly knows"]}
+];
+let WORDS={
+ "Combat: a hit lands":["cleaves","carves","rips through","tears into","bites deep","crashes home","punches through","batters aside","rakes across","drives home","splits the guard","buries itself in","opens a line of red"],
+ "Combat: a miss":["whiffs","skitters past","goes wide","is parried","scrapes harmlessly","thuds into a shield","cuts only air","skips off armor","is sidestepped entirely","is shrugged off"],
+ "Dungeon atmosphere":["dank and cavernous","tomb-still","airless","heavy with age","guttering torchlight","weeping stone","an echo that outlasts its source","a hush that feels deliberate","a coppery tang","a floor that sounds hollow underfoot","rust-eaten iron","the dark presses close"],
+ "Forest":["moss-draped boughs","roots like grasping fingers","dappled light","springy moss underfoot","wind sighing through branches","unseen eyes in the undergrowth","pine resin and damp earth","a clearing bathed in light","a fox slipping between roots","leaves whispering overhead"],
+ "Town and tavern":["lantern-lit and companionable","hawkers’ cries","clattering carts","fresh bread and woodsmoke","a crackling hearth","mismatched mugs","warm lamplight pooling on wood","a street performer drawing a crowd","leaning tenements","the clink of tankards"],
+ "Magic":["glimmering motes","spiraling light","a low resonant tone","ozone tang","hair standing on end","a pull behind the ribs","hands tracing sigils in the air","power gathering like a held breath","a cold that has no source","whispers with no speaker","scorch marks curling outward","the smell of rain after"],
+ "Creatures":["slinks","lumbers","skitters","stalks","coils to strike","a bone-rattling roar","a hiss like escaping steam","eyes like burning coals","a mane like storm clouds","gleaming carapace","testing the air for scent","watching from the treeline"],
+ "Weather and sky":["leaden clouds","bruised twilight","blood-red dusk","low-hanging fog","driving rain","oppressive stillness","a wall of rain advancing","the air thick with static","frost silvering the grass","thunder rolling in the distance"],
+ "NPC reactions":["knuckles white","breath catching","a sidelong glance","hand drifting to hilt","eyes glistening","a breath released all at once","jaw tightening","a voice thick with unshed tears","a smile that doesn’t reach the eyes","a slow reverent nod"],
+ "Villain presence":["radiating quiet menace","dangerously soft","patience that feels like a threat","fingers steepled in thought","eyes like chips of ice","the room seems to cool","conversation dies at their entrance","a compliment that feels like a blade","plans within plans","an old wound they refuse to name"]
+};
+
+const W=(a,b,c,d,e)=>({"Scenery":a,"Sounds and smells":b,"Creatures and folk":c,"Magic and omens":d,"Combat":e});
+const THEMES={
+ Original:{id:"",label:"Original",items:Object.fromEntries(TABLES.map(t=>[t.key,t.items])),words:WORDS,
+  sub:"Roll a plot hook, a motive, a twist and more. Lock what you like, reroll the rest.",
+  hello:"Roll the dice and I’ll weave your tale.",
+  cast:["Abracadabra…","The fates are stirring…","Hold tight, adventurer!","Consulting the old tomes…","Ooh, this one’s a doozy."],
+  done:["Behold, your story seed!","A fine tale brews.","Oh dear. That twist is wicked.","Perfectly dreadful. I love it.","Off you go, adventurers!","I did not see that coming either."]},
+ Christmas:{id:"christmas",label:"Christmas",
+  sub:"Winter tales for the longest night. Roll, lock and reroll.",
+  hello:"Ho ho… oh, wrong wizard. Roll the dice!",
+  cast:["Checking the list twice…","Jingling the fates…","Sprinkling a little frost…"],
+  done:["Merry and ominous!","A tale to tell by the fire.","This one’s going on the naughty list."],
+  items:{
+   hook:["A sleigh bell rings from a chimney no one has lit in years","Santa’s workshop sends a desperate letter: the toy forge has gone cold","A snowed-in village wakes to find every gift swapped for a riddle","A stranger in a red cloak leaves a list with your names on it","The town’s great fir tree blooms in midwinter, glowing from within","A frost-wrapped parcel arrives, addressed to someone long dead","The carolers stop mid-song and will not say why","A reindeer wanders into the tavern wearing a broken harness","A child swears the snowman moved in the night and left footprints","A king offers a feast and a fortune to whoever ends the endless winter","The yule log won’t burn, and something knocks from inside it","A star falls on the hill, and the hill begins to hum"],
+   motive:["Bitter that the holiday forgot them years ago","Hoards gifts to fill an empty house","Believes the world is naughty and must be corrected","Greed disguised as seasonal generosity","Fears the long night will not end without a sacrifice","Devoted to a winter spirit who demands tribute","Wants to be remembered, whatever it costs","Trying to keep a promise made one Christmas Eve","A bargain with the Frost Queen for one more winter with a loved one","Loneliness curdled into cruelty"],
+   twist:["The generous patron is the one stealing the gifts","The “villain” is a lost elf trying to get home","The naughty list was forged","The cursed ornament is a prison, and its occupant is awake","The two rival toy guilds share one hidden master","The snow is not weather but a spell, and it is spreading","A kindness from last winter returns with interest","The jolly benefactor has not been alive for years"],
+   complication:["A blizzard buries the only road","The mulled wine is spiked, or the cider has turned","The guide’s lantern oil freezes solid","The town watch locks the gates for the festival","A sleigh team bolts in the night","A rival band of carolers hunts the same prize"],
+   place:["A frozen lake with a lantern-lit village beneath the ice","A toy workshop gone silent mid-assembly","An inn where it is always Christmas Eve","A pine forest strung with glowing, living ornaments","A chapel whose bells ring on their own at midnight","A candy-cane colonnade leading into a snow cave","A mountain pass guarded by a sleeping frost giant","A frost-covered market of enchanted wares","A snow-buried manor with a table set for twenty","An ice palace built on top of an old gift vault"],
+   reward:["A gift that opens only when its giver is forgiven","A feast, a warm bed, and a debt owed to the host","Knowledge of what each party member truly wishes for","A festive title, with duties that last all year","An ornament of power that grants wishes at an odd price","Peace in the village, paid for with one secret kept"]},
+  words:W(["snow-laden boughs","frost-ferned windows","a sleigh track under moonlight","candlelit windowsills","icicles like crystal daggers","pine garlands over every door","smoke curling from snug chimneys","a hush after fresh snowfall"],
+   ["sleigh bells jingling","carols drifting through the snow","a crackling yule log","cinnamon and clove","roasting chestnuts","fresh gingerbread","creaking floorboards on Christmas Eve","mulled wine steaming"],
+   ["a rosy-cheeked innkeeper","a chittering elf","a reindeer steaming in the cold","a snow sprite","a winter wolf","carolers with frosted breath","a jolly stranger in red","a shivering urchin with a tin whistle"],
+   ["a star blazing overhead","ornaments glowing from within","frost spreading like writing","snowflakes that hang in the air","a hush that breaks into bells","a wish drifting up with the smoke","ribbons that knot themselves","a gift that hums"],
+   ["a snowball packed with ice","a candy-cane cudgel cracks","a sleigh runner scrapes sparks","ice shatters underfoot","the tinkling shatter of ornaments","bells ring out as steel meets steel","a lunge across the frozen floor","a frostbitten gasp"])},
+ Halloween:{id:"halloween",label:"Halloween",
+  sub:"Spooky tales for the thinning of the veil. Roll if you dare.",
+  hello:"Boo! Just kidding. Roll the dice.",
+  cast:["Stirring the cauldron…","The veil grows thin…","Something stirs in the dark…"],
+  done:["Deliciously dreadful!","The pumpkins approve.","Sleep well, adventurers."],
+  items:{
+   hook:["Every scarecrow in the valley has turned to face the village","A jack-o’-lantern lights itself and whispers your name","A masked stranger hands you an invitation to a ball that ended a century ago","The graveyard gate is found unlocked, and the graves are empty","Children vanish on trick-or-treat, leaving only a trail of candy","A witch offers a fortune for an ingredient she won’t name","The harvest moon rises red and the dead start knocking","A mirror in the tavern shows a different room","An old friend arrives, cold to the touch, begging for help","A bell tolls from the drowned church beneath the mill pond","The cornfield has grown a maze overnight","A haunted house has put up a “vacancy” sign"],
+   motive:["Revenge for a wrong buried with the dead","A desperate ritual to bring back someone they loved","Believes they are the village’s last guardian against the dark","Greed for the power of the thinned veil","Fear of what waits on the other side","Devotion to an old god that wakes once a year","A curse they cannot lift but can pass on","Wants to be seen after a lifetime behind a mask","A bargain with a spirit, now come due","Grief that never left the graveyard"],
+   twist:["The friendly host is the ghost","The monster is protecting the village from something worse","The trick was meant for you, and the treat is the trap","The costume is the real face","Two covens you trusted are one in disguise","The haunting is a memory, and you are part of it","The curse was cast by an ancestor of one of you","You have been dead since the first chime"],
+   complication:["Fog swallows the road and the lanterns die","Salt and silver run short or go missing","The trusted guide is unreachable, or was never there","The village mob wants someone to blame","An old wound aches with the moon","A rival coven arrives for the same relic"],
+   place:["A hollow hill lit by a ring of grinning pumpkins","A manor where every portrait’s eyes follow you","A cornfield maze that rearranges at midnight","A graveyard with one grave dug fresh for you","A swamp chapel half-sunk in black water","A candy shop open only after dark","A hay-wagon road that loops back on itself","A witch’s cottage that walks when unwatched","A bell tower with no rope and a ringing bell","A masquerade hall where no one removes a mask"],
+   reward:["A boon from the dead, with a name attached to repay","Candy and kindness, and a witch’s grudge","A truth about the village nobody wanted known","A reputation as monster-slayers, welcome and heavy","A cursed talisman that keeps its wearer safe, for a price","Peace for the haunted, bought by one of you staying behind"]},
+  words:W(["grinning jack-o’-lanterns","cobwebs thick as curtains","a moon the color of old bone","skeletal trees clawing at the sky","mist curling between headstones","a flickering porch light","crooked tombstones leaning together","a cornfield rustling with no wind"],
+   ["a distant tolling bell","rustling corn","the creak of a gate","wet leaves and woodsmoke","candle wax and decay","a laugh that stops too soon","scratching inside the walls","burnt sugar and cold earth"],
+   ["a skittering black cat","a hollow-eyed scarecrow","a bat-winged shadow","a cackling crone","a pale child with an empty basket","a ghoul’s shuffle","a masked reveler","a spider the size of a hound"],
+   ["a cold that has no source","candles guttering all at once","green fire in the cauldron","a whisper in your own voice","shadows that lag behind","a mirror that fogs from the inside","the veil thinning like old cloth","a lantern burning blue"],
+   ["a claw rakes the air","bones rattle as the skeleton lunges","a blade ghosts through the mist","straw arms lash out","a scream swallowed by the fog","silver bites cold","a pumpkin shatters underfoot","shadows surge and fall back"])},
+ Easter:{id:"easter",label:"Easter",
+  sub:"Bright tales for the turning of the season. Roll, lock and reroll.",
+  hello:"Spring has sprung! Roll the dice.",
+  cast:["Hatching a plot…","Planting a seed of mischief…","Hopping through the fates…"],
+  done:["Egg-cellent!","A tale in full bloom.","What a delightful mess."],
+  items:{
+   hook:["A giant egg is found in the meadow, warm and humming","The spring thaw uncovers a door in the hillside","A hare in a waistcoat begs you to follow him","Every egg in the village has hatched into something unexpected","A flower blooms that hasn’t bloomed in a thousand years","A basket arrives with a map to the first egg hunt of the realm","A spring festival begins a day early, and no one will say why","A stranger in a lamb’s fleece asks for shelter, and the fields turn green","The Spring Court sends word: the season has lost its way","A child’s painted egg begins to glow","A rival band of egg-hunters has gone missing in the meadow","A garden grows over a village in a single night"],
+   motive:["Revenge for being left out of the festival","Trying to keep winter from ending, to keep someone close","Believes spring is only worth it if earned","Greed for the golden egg","Fear that the season will not return","Devotion to a seed-spirit that demands the first fruits","A twisted sense of fairness: everyone must find their egg","Ambition to rule a perpetual spring","A promise to a hare king, now impossible to break","Grief that blooms into cruelty"],
+   twist:["The helpful hare has been leading you away from something","The villain is the season trying to be born","The golden egg is a prison, and its occupant is stirring","The festival’s keeper has been replaced by a lookalike","The Spring Court and the Frost Court are one","The “monster” is a hatchling lost far from home","An old kindness bears fruit in an unexpected garden","The meadow is not a meadow"],
+   complication:["A late frost kills the first blooms and the trail","The baskets are empty, or the eggs are rotten","The guide hare vanishes mid-sentence","The village mayor closes the hunt grounds","An old injury aches with the rain","A rival hunting party arrives with a better map"],
+   place:["A hollow hill of burrows and tiny doors","A meadow where the flowers turn to face travelers","A pastel village where no one stops smiling","An orchard in perpetual blossom","A nest the size of a barn","A stream spilling over painted stones","A sunlit chapel with a garden growing through the floor","A market of spun sugar and hand-painted shells","A greenhouse that holds the last of winter","A shrine tended by the last of the Spring Court"],
+   reward:["A blessing freely given, with a seed planted for later","A basket of treasures and a promise owed to the hares","Knowledge of when every season will turn","A title in the Spring Court, welcome and demanding","A golden egg with a will and price of its own","Renewal for the village, bought with one secret kept"]},
+  words:W(["pastel blossoms","dew-bright meadows","a field of daffodils","apple blossoms drifting like snow","painted shells in the tall grass","sunlit hedgerows","a lamb-bright hillside","a puddle mirroring a clear sky"],
+   ["birdsong at dawn","bells over the meadow","wet earth and new grass","honeysuckle on the breeze","a hare thumping in the hedge","fresh-baked sweet bread","buzzing bees","the crack of a shell"],
+   ["a waistcoated hare","a fluffy chick in a teacup","a nibbling lamb","a bright butterfly","a red-cheeked child with a basket","a wise old shepherd","a nest of speckled eggs","a spring sprite"],
+   ["a seed sprouting in your palm","an egg humming softly","flowers opening one by one","a rainbow that touches the ground","ribbons of green light","a warm wind from nowhere","petals that spell a name","a shimmer like sunlight on dew"],
+   ["a staff swings through the daffodils","a shell shatters underfoot","a hare leaps clear of the blow","a vine lashes out of the earth","mud sprays from a skidding boot","a thorn bush snags the blade","a gust of petals blinds the foe","the meadow trembles"])},
+ Valentine:{id:"valentine",label:"Valentine’s Day",
+  sub:"Tales of hearts won, lost and stolen. Roll, lock and reroll.",
+  hello:"Love is in the air! Roll the dice.",
+  cast:["Notching an arrow…","Tangling a few heartstrings…","Consulting the stars of love…"],
+  done:["Oh, the drama!","Love and ruin, perfectly paired.","A tale to break hearts."],
+  items:{
+   hook:["A love letter arrives, unsigned, in your own handwriting","A matchmaker begs your help with an impossible pair","A heart-shaped locket is found, still warm","Cupid’s bow is stolen and every arrow is misfiring","Two rival suitors both claim the same person, and both hire you","A rose garden blooms in the dead of winter","A masked-ball invitation promises true love, or a trap","The town’s lovers all fall out on the same night","A noble offers a fortune for a love note delivered unread","A ballad names one of you as the heart’s thief","A long-lost love arrives, unchanged after twenty years","A fountain’s wishes start coming true, all wrong"],
+   motive:["Revenge for a heart broken long ago","A desperate bid to save someone they love","Believes love justifies any cost","Jealousy dressed up as devotion","Fear of dying unloved","Loyalty to a lover that has curdled into obsession","A twisted romance: if not me, then no one","Ambition to control who may love whom","A pact with a spirit of desire, now impossible to break","Grief that has calcified into cruelty"],
+   twist:["The ally was the secret admirer, and the saboteur","The villain was keeping two lovers apart for good reason","The matchmaker withheld a damning truth","The charmed ring is cursed, sentient, or both","Two feuding houses are secretly one family","The “heartbreaker” is the true victim","A past love returns with unexpected strings","The beloved has been dead or replaced for some time"],
+   complication:["A storm strands the coach on the wrong road","The gifts are stolen, spoiled, or sent to the wrong person","A trusted go-between is unreachable","A chaperone, or the city watch, takes notice","An old heartbreak flares at the worst moment","A rival suitor is chasing the same heart"],
+   place:["A garden maze where every path leads to a confession","A masked ball in a candlelit ballroom","A bridge hung with lovers’ padlocks","A chocolatier’s shop that sells more than chocolate","A balcony overlooking two feuding houses","A fountain where wishes are heard","A theater where the play seems to know you","An inn where every room is for two","A rose-covered chapel half forgotten","A shrine tended by the last of an order of lovers"],
+   reward:["A favor freely given, with strings that surface later","A fortune and a feud inherited","Knowledge that changes what you thought of love","The title of matchmaker, welcome and meddlesome","A charm of power with a will and price of its own","Peace bought with a love only one of you knows was lost"]},
+  words:W(["rose petals underfoot","candlelit balconies","ribbons tied to every railing","heart-shaped keyholes","velvet curtains","a moonlit courtyard","ivy-tangled trellises","lanterns strung across the square"],
+   ["a violin drifting from a window","whispered confessions","rose and vanilla","melting chocolate","the rustle of silk","a nervous laugh","a quill scratching late","warm bread and honey"],
+   ["a cherub with a crooked bow","a blushing messenger","a poet with ink-stained fingers","a duelist in lace","a dove with a ribbon","a suspicious chaperone","a matchmaker with a ledger","a lovelorn bard"],
+   ["an arrow humming in flight","a glowing heart-shaped locket","a rose that never wilts","a flush that spreads without cause","a thread of red light between two people","a whisper of someone’s true name","petals that rise against gravity","a spell that smells of honey"],
+   ["a rapier flickers like a lover’s glance","a thorned vine whips","silk tears under a blade","a cupid’s arrow whistles past","a heart-stopping parry","a vase shatters on the stones","roses scatter as boots skid","a duel under the balcony"])}
+};
+
+const $=s=>document.querySelector(s);
+const state={vals:{},locked:{}};
+const rnd=n=>{const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+state.theme="Original";
+
+const grid=$("#grid");
+TABLES.forEach(t=>{
+  const el=document.createElement("div");
+  el.className="slot";el.id="slot-"+t.key;
+  el.innerHTML=`<button class="die s${t.sides}" aria-label="Roll ${t.name}"><span class="shape"></span><b>?</b><small>d${t.sides}</small></button>
+   <div><h2>${t.name}</h2><p>Not rolled yet</p></div>
+   <div class="tools"><button data-act="lock" aria-pressed="false">Lock</button><button data-act="roll">Reroll</button><button data-act="add" title="Add your own suggestion to this table">Add yours</button></div>
+   <details><summary>See the full table</summary><ol>${t.items.map(i=>`<li>${i}</li>`).join("")}</ol></details>`;
+  grid.appendChild(el);
+  el.querySelector(".die").onclick=()=>rollOne(t);
+  el.querySelector('[data-act="roll"]').onclick=()=>rollOne(t);
+  el.querySelector('[data-act="lock"]').onclick=()=>setLock(t.key,!state.locked[t.key]);
+});
+
+function setLock(key,on){
+  state.locked[key]=on;
+  const el=$("#slot-"+key),b=el.querySelector('[data-act="lock"]');
+  el.classList.toggle("locked",on);b.textContent=on?"Unlock":"Lock";b.setAttribute("aria-pressed",on);
+}
+
+const wiz=$("#wiz"),bubble=$("#bubble");
+let rolling=0,sparkTimer=null;
+let castLines=["Abracadabra…","The fates are stirring…","Hold tight, adventurer!","Consulting the old tomes…","Ooh, this one’s a doozy."];
+let doneLines=["Behold, your story seed!","A fine tale brews.","Oh dear. That twist is wicked.","Perfectly dreadful. I love it.","Off you go, adventurers!","I did not see that coming either."];
+const pick=a=>a[rnd(a.length)];
+function sparkle(){
+  const sp=document.createElement("span");sp.className="spark";
+  sp.style.left="76%";sp.style.top="21%";
+  sp.style.setProperty("--dx",(rnd(70)-35)+"px");sp.style.setProperty("--dy",-(20+rnd(50))+"px");
+  wiz.appendChild(sp);setTimeout(()=>sp.remove(),950);
+}
+function wizStart(){
+  if(rolling++===0){
+    $("#theme").disabled=true;
+    wiz.classList.add("show","casting");bubble.textContent=pick(castLines);
+    sparkTimer=setInterval(sparkle,110);
+  }
+}
+function wizEnd(){
+  if(--rolling===0){
+    $("#theme").disabled=false;
+    wiz.classList.remove("casting");clearInterval(sparkTimer);bubble.textContent=pick(doneLines);
+    for(let i=0;i<10;i++)setTimeout(sparkle,i*40);
+  }
+}
+
+async function rollOne(t,quiet){
+  wizStart();
+  const el=$("#slot-"+t.key),face=el.querySelector(".die b"),die=el.querySelector(".die");
+  const pool=t.active,result=rnd(pool.length);
+  die.classList.remove("landed");die.classList.add("rolling");
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const dur=reduce?150:900+rnd(500);
+  const end=Date.now()+dur;
+  while(Date.now()<end){face.textContent=1+rnd(pool.length);await sleep(70)}
+  face.textContent=result+1;
+  die.classList.remove("rolling");void die.offsetWidth;die.classList.add("landed");
+  el.querySelector("p").textContent=pool[result];
+  el.querySelectorAll("details li").forEach(li=>li.classList.toggle("hit",t.items[+li.dataset.i]===pool[result]));
+  state.vals[t.key]=pool[result];state.curId=null;
+  wizEnd();
+  if(!quiet)renderSeed();
+}
+
+async function rollAll(){
+  const btn=$("#rollAll");btn.disabled=true;
+  await Promise.all(TABLES.filter(t=>!state.locked[t.key]).map(async(t,i)=>{await sleep(i*120);await rollOne(t,true)}));
+  btn.disabled=false;renderSeed(true);
+}
+
+function renderSeed(save){
+  const v=state.vals,box=$("#seed");
+  if(!Object.keys(v).length)return;
+  box.innerHTML="<h3>Your story seed</h3><ul>"+TABLES.filter(t=>v[t.key]).map(t=>`<li><strong>${t.name}.</strong> ${v[t.key]}</li>`).join("")+"</ul>";
+}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1500)}
+
+$("#rollAll").onclick=rollAll;
+$("#unlock").onclick=()=>{TABLES.forEach(t=>setLock(t.key,false));toast("All dice unlocked")};
+$("#lockAll").onclick=()=>{TABLES.forEach(t=>setLock(t.key,true));toast("All dice locked")};
+const cat=$("#cat");
+function draw(){
+  const pool=[...WORDS[cat.value]],out=[];
+  while(out.length<5&&pool.length)out.push(pool.splice(rnd(pool.length),1)[0]);
+  $("#chips").innerHTML=out.map(w=>`<span class="chip">${w}</span>`).join("");
+}
+$("#draw").onclick=draw;cat.onchange=draw;
+
+/* ---------- saved seeds ---------- */
+state.saved=[];try{state.saved=JSON.parse(localStorage.getItem("dice-saved")||"[]")}catch(e){}
+const esc=x=>String(x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function persistSaved(){try{localStorage.setItem("dice-saved",JSON.stringify(state.saved))}catch(e){}}
+const nameOv=$("#nameOv"),nameIn=$("#nameIn");
+let renaming=null;
+function showName(title,okLabel,val){
+  $("#nameT").textContent=title;$("#nameOk").textContent=okLabel;
+  nameIn.value=val;nameOv.classList.add("show");nameIn.focus();nameIn.select();
+}
+function openName(){
+  if(!Object.keys(state.vals).length)return toast("Roll something first");
+  renaming=null;showName("Name this seed","Save seed","");
+}
+function openRename(id){
+  const v=state.saved.find(x=>String(x.id)===String(id));if(!v)return;
+  renaming=v.id;showName("Rename this seed","Rename",v.name||"");
+}
+function closeName(){nameOv.classList.remove("show");(renaming!==null?$("#bkClose"):$("#save")).focus()}
+function commitSave(){
+  const name=nameIn.value.trim().slice(0,40);
+  if(renaming!==null){
+    const v=state.saved.find(x=>x.id===renaming);
+    if(v){v.name=name;persistSaved();refreshBook(bk.cur);toast("Seed renamed")}
+    closeName();renaming=null;return;
+  }
+  state.curId=Date.now();state.saved.unshift({id:state.curId,label:THEMES[state.theme].label,name,date:new Date().toLocaleString([],{dateStyle:"medium",timeStyle:"short"}),lines:TABLES.filter(t=>state.vals[t.key]).map(t=>[t.name,state.vals[t.key]]),notes:notesEl.value.trim()});
+  persistSaved();closeName();toast(notesEl.value.trim()?"Seed saved with notes":"Seed saved");
+}
+$("#save").onclick=openName;
+$("#nameOk").onclick=commitSave;
+$("#nameCancel").onclick=()=>{closeName();renaming=null};
+nameIn.addEventListener("keydown",e=>{
+  e.stopPropagation();
+  if(e.key==="Enter"){e.preventDefault();commitSave()}
+  else if(e.key==="Escape"){e.preventDefault();closeName();renaming=null}
+});
+nameOv.addEventListener("click",e=>{if(e.target===nameOv){closeName();renaming=null}});
+
+/* ---------- reset ---------- */
+function resetDice(){
+  if(rolling)return;
+  state.vals={};state.curId=null;
+  TABLES.forEach(t=>{
+    setLock(t.key,false);
+    const el=$("#slot-"+t.key);
+    el.querySelector(".die b").textContent="?";
+    el.querySelector("p").textContent="Not rolled yet";
+    el.querySelectorAll("details li").forEach(li=>li.classList.remove("hit"));
+  });
+  $("#seed").innerHTML="<h3>Your story seed</h3><p>Roll the dice to begin.</p>";
+  bubble.textContent=THEMES[state.theme].hello;wiz.classList.remove("show","casting");
+}
+$("#reset").onclick=e=>{
+  if(rolling)return toast("Wait for the dice to land");
+  resetDice();notesEl.value="";try{localStorage.removeItem("dice-notes-draft")}catch(e){}toast("Dice and notes reset");
+  const b=e.currentTarget;b.classList.remove("spin");void b.offsetWidth;b.classList.add("spin");
+};
+
+/* ---------- atmosphere and sprites ---------- */
+const SPR={
+ sleigh:'<svg viewBox="0 0 130 50"><path d="M78 28 Q66 32 58 30" stroke="#b3202a" stroke-width="1.6" fill="none"/><path d="M8 24 H46 Q56 24 58 15 Q58 32 46 34 H14 Q6 34 8 24Z" fill="#b3202a"/><path d="M6 42 H56 Q65 42 63 31" stroke="#c8962e" stroke-width="2.2" fill="none"/><path d="M18 34 V42 M44 34 V42" stroke="#c8962e" stroke-width="1.6"/><ellipse cx="15" cy="22" rx="7" ry="6" fill="#8a5a32"/><circle cx="31" cy="18" r="5" fill="#f0cba0"/><circle cx="33.5" cy="17" r="1" fill="#333"/><path d="M29 22 Q34 28 37 21 Q33 24 29 22Z" fill="#fff"/><path d="M26 17 Q27 4 37 14Z" fill="#d6322a"/><circle cx="25" cy="5" r="2.2" fill="#fff"/><g class="lg" style="transform-origin:82px 32px"><path d="M82 32 L80 44" stroke="#5b3a1e" stroke-width="2.6"/></g><g class="lg" style="transform-origin:96px 32px;animation-delay:.15s"><path d="M96 32 L99 44" stroke="#5b3a1e" stroke-width="2.6"/></g><path d="M74 24 L70 22" stroke="#5b3a1e" stroke-width="2.4"/><ellipse cx="88" cy="27" rx="13" ry="6.5" fill="#8a5a32"/><path d="M96 24 L101 14 L107 20 L100 30Z" fill="#8a5a32"/><circle cx="103" cy="17" r="4.6" fill="#8a5a32"/><circle cx="108" cy="18" r="1.7" fill="#d6322a"/><circle cx="104" cy="15.5" r="0.9" fill="#222"/><path d="M101 13 L98 4 M101 13 L106 5 M98 4 L95 6 M106 5 L109 7" stroke="#5b3a1e" stroke-width="1.5" fill="none"/></svg>',
+ snowman:'<svg viewBox="0 0 56 80"><circle cx="26" cy="62" r="16" fill="#fff" stroke="#9fb7c8" stroke-width="1.5"/><circle cx="26" cy="38" r="12" fill="#fff" stroke="#9fb7c8" stroke-width="1.5"/><circle cx="26" cy="18" r="9" fill="#fff" stroke="#9fb7c8" stroke-width="1.5"/><circle cx="23" cy="16" r="1.2" fill="#333"/><circle cx="29" cy="16" r="1.2" fill="#333"/><path d="M26 19 L35 21 L26 22Z" fill="#f08a24"/><rect x="17" y="26" width="18" height="4" rx="2" fill="#b3202a"/><rect x="19" y="3" width="14" height="6" fill="#2d4a38"/><rect x="15" y="8" width="22" height="3" fill="#2d4a38"/><path d="M14 36 L2 42" stroke="#6b4a2a" stroke-width="2" fill="none"/><path class="arm" style="transform-origin:38px 36px" d="M38 36 L52 26 M48 29 L50 22" stroke="#6b4a2a" stroke-width="2" fill="none"/></svg>',
+ bat:'<svg viewBox="0 0 60 30"><path class="wl" style="transform-origin:27px 15px" d="M27 14 Q14 2 2 8 Q8 12 6 20 Q14 14 20 22 Q24 18 27 14Z" fill="#2f2040" stroke="#9a75c8"/><path class="wr" style="transform-origin:33px 15px" d="M33 14 Q46 2 58 8 Q52 12 54 20 Q46 14 40 22 Q36 18 33 14Z" fill="#2f2040" stroke="#9a75c8"/><ellipse cx="30" cy="16" rx="5" ry="7" fill="#2f2040" stroke="#9a75c8"/><path d="M26 10 L27 5 L30 9 L33 5 L34 10Z" fill="#2f2040" stroke="#9a75c8"/><circle cx="28" cy="14" r="1" fill="#ff8a1f"/><circle cx="32" cy="14" r="1" fill="#ff8a1f"/></svg>',
+ ghost:'<svg viewBox="0 0 40 50" class="ghostfade"><path d="M4 46 V20 Q4 4 20 4 Q36 4 36 20 V46 L30 40 L25 46 L20 40 L15 46 L10 40Z" fill="#f4f1ff" opacity=".92"/><circle cx="14" cy="20" r="3" fill="#2a1d33"/><circle cx="26" cy="20" r="3" fill="#2a1d33"/><ellipse cx="20" cy="29" rx="3" ry="4" fill="#2a1d33"/></svg>',
+ pumpkin:'<svg viewBox="0 0 48 42"><rect x="22" y="2" width="4" height="8" rx="1.5" fill="#4d7a3a"/><ellipse cx="24" cy="26" rx="20" ry="15" fill="#f07a1a"/><path d="M24 11 Q14 26 24 41 M24 11 Q34 26 24 41" stroke="#c4560c" stroke-width="1.5" fill="none"/><g class="glow"><path d="M12 22 L18 22 L15 17Z M30 22 L36 22 L33 17Z" fill="#ffe08a"/><path d="M14 31 Q24 38 34 31 L31 29 L28 32 L24 29 L20 32 L17 29Z" fill="#ffe08a"/></g></svg>',
+ bunny:'<svg viewBox="0 0 56 50"><ellipse cx="26" cy="34" rx="15" ry="10" fill="#fff" stroke="#bda9d6" stroke-width="1.5"/><circle cx="11" cy="32" r="4" fill="#fff" stroke="#bda9d6" stroke-width="1.5"/><ellipse cx="39" cy="12" rx="3" ry="9" fill="#fff" stroke="#bda9d6" stroke-width="1.5" transform="rotate(-8 39 19)"/><ellipse cx="46" cy="13" rx="3" ry="9" fill="#fff" stroke="#bda9d6" stroke-width="1.5" transform="rotate(10 46 20)"/><ellipse cx="39" cy="13" rx="1.2" ry="6" fill="#f6b6cf" transform="rotate(-8 39 19)"/><circle cx="41" cy="26" r="8" fill="#fff" stroke="#bda9d6" stroke-width="1.5"/><circle cx="44" cy="24" r="1.4" fill="#333"/><circle cx="49" cy="27" r="1.4" fill="#f08aa8"/><ellipse cx="35" cy="44" rx="6" ry="2.5" fill="#fff" stroke="#bda9d6"/><ellipse cx="18" cy="44" rx="6" ry="2.5" fill="#fff" stroke="#bda9d6"/></svg>',
+ butterfly:'<svg viewBox="0 0 40 30"><g class="bw" style="transform-origin:20px 15px"><ellipse cx="11" cy="10" rx="9" ry="7" fill="#f2a0c4"/><ellipse cx="29" cy="10" rx="9" ry="7" fill="#f2a0c4"/><ellipse cx="12" cy="21" rx="6" ry="5" fill="#ffd36b"/><ellipse cx="28" cy="21" rx="6" ry="5" fill="#ffd36b"/></g><rect x="19" y="6" width="2" height="18" rx="1" fill="#5a3f6e"/></svg>',
+ dragon:'<svg viewBox="0 0 130 60"><path class="wl" style="transform-origin:66px 34px" d="M66 34C60 14 44 4 26 6c8 4 10 10 10 16-5-2-9-2-13 0 7 2 12 7 14 14z" fill="#8a2a2a" stroke="#d9a84a" stroke-width="1.2"/><path d="M34 40c-12 0-22 2-30 8 12 0 20-1 28-4z" fill="#7a2222" stroke="#d9a84a"/><ellipse cx="68" cy="40" rx="30" ry="10" fill="#8a2a2a" stroke="#d9a84a" stroke-width="1.2"/><path d="M90 36c8-4 14-12 16-18l10 2c2 4 8 5 12 7l-12 3c-4 6-12 9-20 9z" fill="#8a2a2a" stroke="#d9a84a" stroke-width="1.2"/><path class="wr" style="transform-origin:66px 34px" d="M70 34C74 16 90 8 108 12c-8 3-10 8-9 13 5-1 9 0 12 3-7 1-12 5-14 11z" fill="#a33a3a" stroke="#d9a84a" stroke-width="1.2"/><circle cx="110" cy="22" r="1.6" fill="#ffd966"/><path d="M118 28c4 0 8-2 10-5-1 5-5 8-10 9z" fill="#ff9a2e"/></svg>',
+ torch:'<svg viewBox="0 0 30 70"><path d="M12 30h6l2 38H10z" fill="#5a3a22" stroke="#1d1611"/><path d="M7 28h16l-2 7H9z" fill="#4a3a30" stroke="#1d1611"/><g class="tf" style="transform-origin:15px 26px"><path d="M15 3c3 6 9 9 9 17a9 9 0 01-18 0c0-5 3-7 4-10 1 3 2 4 3 4 0-4-1-7 2-11z" fill="#ff9a2e"/><path d="M15 13c2 3 4 5 4 8a4 4 0 01-8 0c0-3 3-4 4-8z" fill="#ffe08a"/></g></svg>',
+ d20:'<svg viewBox="0 0 40 44"><path d="M20 2l16 10v20L20 42 4 32V12z" fill="#3a5fa8" stroke="#c8962e" stroke-width="1.5"/><path d="M20 2L4 32h32zM4 12l16 12 16-12M20 24v18" fill="none" stroke="#c8962e" stroke-width="1" opacity=".75"/><text x="20" y="27" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="9" fill="#fff4d6">20</text></svg>',
+ heart:'<svg viewBox="0 0 64 44"><path class="wl" style="transform-origin:26px 22px" d="M26 22 Q10 6 2 14 Q8 18 6 26 Q14 20 24 28Z" fill="#fff" stroke="#e8bcc6"/><path class="wr" style="transform-origin:38px 22px" d="M38 22 Q54 6 62 14 Q56 18 58 26 Q50 20 40 28Z" fill="#fff" stroke="#e8bcc6"/><path d="M32 40 C16 28 16 14 26 14 C29 14 31 16 32 18 C33 16 35 14 38 14 C48 14 48 28 32 40Z" fill="#d6456f"/></svg>'
+};
+const gs=(g,a,b,cls,w)=>({g,a,b,cls,w});
+const FX={
+ orig:{aura:"",amb:["flick","fog",""],n:4,
+  p:[{ch:["•","·","✦"],cols:["#ff8a1f","#ffb35c","#ffd36b"],glow:"rgba(255,138,31,.9)",a:"risep",rate:520,size:[8,16],dur:[10,18]},
+     {ch:["✧","◆","✦"],cols:["#c8a8ff","#9fd0ff","#ffd98a"],glow:"rgba(160,120,255,.8)",a:"risep",rate:800,size:[10,20],dur:[14,22]},
+     {ch:["·","•"],cols:["#d8c8a8","#bfae8a"],glow:"rgba(255,230,180,.5)",a:"fallp",rate:420,size:[6,12],dur:[14,22]}],
+  sprites:[{svg:"dragon",cls:"fly",w:170},{svg:"bat",cls:"fly",w:54},{svg:"torch",cls:"bob",w:30},{svg:"d20",cls:"flit",w:44},
+   gs("chest","#a8683a","#c8962e","bob",52),gs("candle","#e0b23a","#8a5a2e","bob",34),gs("flame","#4aa3df","#bfe8ff","flit",34),
+   gs("orb","#8e44ad","#d2b4de","flit",38),gs("skull","#e9e1cf","#b9ae96","bob",40),gs("wizard","#3f78c8","#a9cdf5","bob",46),gs("swords","#c9d0d8","#8a5a2e","bob",42)]},
+ christmas:{aura:"rgba(180,220,255,.35)",amb:["lights","aura","lights"],n:4,
+  p:[{ch:["❄","❅","❆"],cols:["#9fc0d6","#ffffff","#c4d9e6"],glow:"rgba(70,110,140,.6)",a:"fallp",rate:380,size:[11,22],dur:[9,16]},
+     {ch:["❄","❅"],cols:["#ffffff","#dff0fa"],glow:"rgba(70,110,140,.5)",a:"fallp",rate:200,size:[8,16],dur:[8,13]},
+     {ch:["✦","✧"],cols:["#ffd36b","#fff1a8","#ffffff"],glow:"rgba(255,214,107,.8)",a:"fallp",rate:560,size:[8,16],dur:[10,16]}],
+  sprites:[{svg:"sleigh",cls:"fly",w:150},{svg:"snowman",cls:"bob",w:54},gs("gift","#c0392b","#f1c40f","bob",44),gs("pine","#2d6a4a","#eef6fa","bob",50),
+   gs("bell","#e0b23a","#fff1a8","bob",34),gs("star","#ffd36b","#ffffff","flit",34),gs("gingerbread","#b8793a","#ffffff","bob",42),
+   gs("stag","#8a5a2e","#e0b27a","bob",46),gs("snow","#9fd3ea","#ffffff","flit",36),gs("candle","#c0392b","#2d6a4a","bob",32)]},
+ halloween:{aura:"rgba(255,138,31,.25)",amb:["fog","flick","fog"],n:4,
+  p:[{ch:["•","✦","·"],cols:["#ff8a1f","#ffb35c","#ffd36b"],glow:"rgba(255,138,31,.9)",a:"risep",rate:450,size:[10,20],dur:[9,16]},
+     {ch:["✧","·"],cols:["#9be8a8","#c8f5d0"],glow:"rgba(120,255,160,.8)",a:"risep",rate:700,size:[10,20],dur:[12,20]},
+     {ch:["❦","✦"],cols:["#c8561a","#8a3a12","#d9a030"],glow:"rgba(0,0,0,.3)",a:"fallp",rate:520,size:[12,22],dur:[10,17]}],
+  sprites:[{svg:"bat",cls:"fly",w:58},{svg:"bat",cls:"fly",w:44},{svg:"ghost",cls:"bob",w:44},{svg:"pumpkin",cls:"bob",w:50},
+   gs("spider","#3a3340","#a898b8","flit",36),gs("skull","#e9e1cf","#b9ae96","bob",40),gs("cat","#2f2838","#a898b8","bob",44),
+   gs("moon","#f1e2a0","#fff8d0","flit",40),gs("wizard","#6a4a7a","#c9a8e8","bob",46),gs("candle","#e8742a","#3a3340","bob",32)]},
+ easter:{aura:"rgba(255,230,160,.45)",amb:["aura","",""],n:4,
+  p:[{ch:["✿","❀","✾"],cols:["#f2a0c4","#c9a8e8","#ffd36b","#9fd6b5"],glow:"rgba(255,255,255,.8)",a:"fallp",rate:520,size:[12,22],dur:[11,19]},
+     {ch:["•"],cols:["#f2a0c4","#c9a8e8","#ffd36b","#9fd6b5","#8fd0f0"],glow:"rgba(255,255,255,.8)",a:"fallp",rate:300,size:[6,12],dur:[9,15]},
+     {ch:["✦","✧"],cols:["#ffd36b","#ffffff"],glow:"rgba(255,255,255,.9)",a:"risep",rate:700,size:[8,16],dur:[12,18]}],
+  sprites:[{svg:"bunny",cls:"hop",w:58},{svg:"butterfly",cls:"flit",w:38},{svg:"butterfly",cls:"flit",w:30},gs("chick","#ffd95a","#ff8a1f","bob",42),
+   gs("egg","#c9a8e8","#ffd36b","bob",38),gs("flower","#f2a0c4","#ffd36b","bob",44),gs("sheep","#f4f0e6","#3a3340","bob",46),
+   gs("carrot","#ff8a1f","#4f8a3a","bob",34),gs("basket","#d9a45a","#f2a0c4","bob",46)]},
+ valentine:{aura:"rgba(255,170,200,.4)",amb:["aura","",""],n:4,
+  p:[{ch:["♥","♥","❤"],cols:["#d6456f","#f08aa8","#ff6f91","#b3203f"],glow:"rgba(255,255,255,.8)",a:"risep",rate:420,size:[11,24],dur:[9,16]},
+     {ch:["✦","✧"],cols:["#ff8aa8","#ffffff","#ffd1dc"],glow:"rgba(255,255,255,.8)",a:"fallp",rate:560,size:[8,16],dur:[10,16]},
+     {ch:["✿"],cols:["#d6456f","#f08aa8"],glow:"rgba(255,255,255,.6)",a:"fallp",rate:520,size:[12,20],dur:[11,18]}],
+  sprites:[{svg:"heart",cls:"flit",w:56},{svg:"heart",cls:"flit",w:44},gs("flower","#d6456f","#ffd1dc","bob",44),gs("envelope","#f4a8be","#d6456f","flit",40),
+   gs("bird","#f4f0f6","#f4a8be","fly",44),gs("heart","#d6456f","#ff9ab8","flit",38),gs("ring","#e0b23a","#ffffff","bob",34),gs("mug","#d6456f","#ffd1dc","bob",36)]}
+};
+let fxTimer=null;
+const R=(a,b)=>a+Math.random()*(b-a);
+function setFx(name){
+  const fx=$("#fx");fx.innerHTML="";clearInterval(fxTimer);
+  const F=FX[THEMES[name].id||"orig"];
+  if(!F||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  const am=pick(F.amb),add=c=>{const f=document.createElement("div");f.className=c;fx.appendChild(f);return f};
+  if(am==="fog")add("fog");
+  if(am==="flick")add("flickv");
+  if(am==="aura")add("aura").style.setProperty("--au",F.aura);
+  if(am==="lights"){
+    const L=add("lights"),cols=["#d6322a","#2e9d57","#e8b030","#3a7bd5"];
+    for(let i=0;i<26;i++){const b=document.createElement("i");b.style.setProperty("--b",cols[i%4]);b.style.setProperty("--dl",(i%5)*.35+"s");L.appendChild(b)}
+  }
+  const slots=["bottom:14px;left:18px","bottom:14px;right:22px","bottom:84px;left:12px","bottom:90px;right:14px","bottom:150px;left:10px","bottom:156px;right:10px"].sort(()=>Math.random()-.5);
+  [...F.sprites].sort(()=>Math.random()-.5).slice(0,F.n||4).forEach(sp=>{
+    const d=document.createElement("div");d.className="sp "+sp.cls;
+    let ps;
+    if(sp.cls==="fly")ps=`top:${Math.round(R(5,48))}%;--d:${Math.round(R(18,34))}s;--dl:${R(0,10).toFixed(1)}s`;
+    else if(sp.cls==="hop")ps=`bottom:12px;--d:${Math.round(R(30,40))}s;--dl:${Math.round(R(0,6))}s`;
+    else if(sp.cls==="flit")ps=`top:${Math.round(R(12,62))}%;left:${Math.round(R(4,84))}%`;
+    else ps=slots.pop()||"bottom:14px;left:18px";
+    d.style.cssText=ps+";width:"+Math.round(sp.w*R(.9,1.15))+"px";
+    d.innerHTML=sp.svg?SPR[sp.svg]:ART.svg(sp.g,sp.a,sp.b);fx.appendChild(d);
+  });
+  const P=pick(F.p);
+  const spawn=()=>{
+    if(document.hidden)return;
+    const e=document.createElement("span");e.className="pt";
+    e.textContent=pick(P.ch)+"\uFE0E";
+    e.style.cssText=`--x:${R(0,98)}%;--s:${R(...P.size)}px;--c:${pick(P.cols)};--g:${P.glow};--a:${P.a};--t:${R(...P.dur)}s;--dx:${R(-90,90)}px;--r:${R(-240,240)}deg`;
+    fx.appendChild(e);e.addEventListener("animationend",()=>e.remove());
+  };
+  for(let i=0;i<10;i++)setTimeout(spawn,i*120);
+  fxTimer=setInterval(spawn,P.rate);
+}
+
+/* ---------- My Seeds book ---------- */
+const ov=$("#bookOv"),fly=$("#bookfly"),bookEl=$("#book"),ctl=$("#bkCtl");
+const bk={open:false,locked:false,cur:0,leaves:[],cover:null};
+const RM=()=>matchMedia("(prefers-reduced-motion:reduce)").matches;
+const wait=ms=>new Promise(r=>setTimeout(r,RM()?20:ms));
+const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+const iconOf=l=>/^\S+\s/.test(l)?l.split(" ")[0]:"";
+const wordOf=l=>l.replace(/^\S+\s/,"");
+const backTitle=v=>(iconOf(v.label)+" "+(v.name||wordOf(v.label))).trim();
+function brief(v){
+  const g=n=>(v.lines.find(l=>l[0]===n)||[])[1],cut=x=>x.replace(/[.!\s]+$/,"");
+  let t=g("Plot hook")?cut(g("Plot hook")):"";
+  if(g("Plot twist"))t+=(t?". Twist: ":"Twist: ")+cut(g("Plot twist"));
+  if(!t)t=v.lines.slice(0,2).map(l=>cut(l[1])).join(". ");
+  t+=".";return t.length>160?t.slice(0,157).trimEnd()+"…":t;
+}
+function buildBook(){
+  const seeds=state.saved,N=seeds.length;
+  bk.cur=0;bk.leaves=[];
+  const toc=N?`<ol class="toc">${seeds.map((v,i)=>{const b=brief(v);return `<li><button data-go="${i}"><b>${i+1}.</b> ${esc(v.name||"Untitled seed")}: ${esc(b.length>78?b.slice(0,75).trimEnd()+"…":b)}</button></li>`}).join("")}</ol>`:'<p class="empty" style="margin-top:14px">No seeds yet. Press “Save seed” on the main page and it will appear here.</p>';
+  let h=`<div class="endc"><div class="face">${N?"✦ The End ✦":"Your first page is waiting."}</div></div>`;
+  seeds.forEach((v,i)=>{
+    h+=`<div class="leaf" data-i="${i}" style="z-index:${100-i}"><div class="face page front"><div class="ph"><span>${esc(v.label)}</span><span>${esc(v.date)}</span></div><h4>${esc(v.name||wordOf(v.label))}</h4><p class="brief"><em>In brief.</em> ${esc(brief(v))}</p><div class="pbody"><dl>${v.lines.map(l=>`<dt>${esc(l[0])}</dt><dd>${esc(l[1])}</dd>`).join("")}${v.notes?`<dt>Notes</dt><dd class="pnotes">${esc(v.notes)}</dd>`:""}</dl></div><div class="pn">${i+1}</div><button class="pren" data-id="${v.id}" aria-label="Rename this seed" title="Rename this seed">${ico("pencil")}</button><button class="pdel" data-id="${v.id}" aria-label="Delete this seed" title="Delete this seed">${ico("trash")}</button><button class="pview" data-id="${v.id}" aria-label="Open this seed full screen" title="Open full screen">Open</button><button class="pcopy" data-id="${v.id}">Copy</button></div><div class="face back page"><div class="flour">❦</div><small>${esc(backTitle(v))}</small></div></div>`;
+  });
+  h+=`<div class="cover" style="z-index:300"><div class="face cfront"><span class="orn">✦</span><h2>My Tales</h2><span>${N} ${N===1?"tale":"tales"} kept</span></div><div class="face back page"><h4>Contents</h4><div class="ph"><span>${N} ${N===1?"seed":"seeds"}</span><span>Tap one to jump</span></div>${toc}</div></div>`;
+  bookEl.className="book";bookEl.innerHTML=h;
+  bk.cover=bookEl.querySelector(".cover");
+  bk.leaves=[...bookEl.querySelectorAll(".leaf")].map(el=>({el,t:0}));
+  updateCtl();
+}
+function updateCtl(){
+  const n=bk.leaves.length;
+  $("#bkPrev").disabled=bk.cur===0;$("#bkNext").disabled=bk.cur>=n;
+  $("#bkInfo").textContent=n===0?"No seeds yet":bk.cur<n?`Seed ${bk.cur+1} of ${n}`:"The End";
+}
+function flipLeaf(i,fwd){
+  const L=bk.leaves[i];clearTimeout(L.t);
+  L.el.style.zIndex=200;L.el.classList.toggle("flipped",fwd);
+  L.t=setTimeout(()=>{L.el.style.zIndex=fwd?10+i:100-i},RM()?30:900);
+}
+function step(dir){
+  const i=dir>0?bk.cur:bk.cur-1;
+  if(i<0||i>=bk.leaves.length)return;
+  flipLeaf(i,dir>0);bk.cur+=dir;updateCtl();
+}
+function turn(dir){if(bk.open&&!bk.locked)step(dir)}
+async function goTo(t){
+  if(!bk.open||bk.locked)return;bk.locked=true;
+  while(bk.cur!==t){step(t>bk.cur?1:-1);await wait(190)}
+  bk.locked=false;
+}
+function flyVec(){
+  const b=$("#mySeeds").getBoundingClientRect(),w=fly.getBoundingClientRect();
+  return {dx:b.left+b.width/2-(w.left+w.width/2),dy:b.top+b.height/2-(w.top+w.height/2)};
+}
+function refreshBook(cur){
+  bookEl.classList.add("nt");
+  buildBook();
+  const n=bk.leaves.length;cur=Math.min(cur,Math.max(0,n-1));
+  bk.cover.classList.add("flipped");bk.cover.style.zIndex=1;bookEl.classList.add("open");
+  bk.leaves.forEach((L,i)=>{if(i<cur){L.el.classList.add("flipped");L.el.style.zIndex=10+i}});
+  bk.cur=cur;updateCtl();
+  void bookEl.offsetWidth;bookEl.classList.remove("nt");
+}
+function delSeed(id){
+  state.saved=state.saved.filter(x=>String(x.id)!==String(id));mapsDb.forEach(m=>{if(String(m.seedId)===String(id))m.seedId=null});persistMaps();
+  persistSaved();refreshBook(bk.cur);toast("Seed deleted");
+}
+async function openBook(){
+  if(bk.open||bk.locked)return;bk.locked=true;
+  buildBook();ov.classList.add("show");await frame();
+  const {dx,dy}=flyVec();ov.classList.add("on");
+  const small=`translate(${dx}px,${dy}px) scale(.08) rotate(-20deg)`;
+  const a=fly.animate([{transform:small,opacity:0},{opacity:1,offset:.3},{transform:"translate(0,0) scale(1) rotate(0deg)",opacity:1}],{duration:RM()?1:780,easing:"cubic-bezier(.2,.9,.25,1)",fill:"both"});
+  await a.finished;a.cancel();
+  await wait(120);
+  bk.cover.classList.add("flipped");bookEl.classList.add("open");
+  await wait(950);bk.cover.style.zIndex=1;
+  bk.open=true;bk.locked=false;ctl.classList.add("show");$("#bkClose").focus();
+}
+async function closeBook(){
+  if(!bk.open||bk.locked)return;bk.locked=true;ctl.classList.remove("show");
+  const n=bk.cur;
+  if(n>0){
+    const gap=Math.max(70,Math.min(150,900/n));
+    for(let i=n-1;i>=0;i--){flipLeaf(i,false);await wait(gap)}
+    bk.cur=0;await wait(900);
+  }
+  bk.cover.style.zIndex=300;bk.cover.classList.remove("flipped");bookEl.classList.remove("open");
+  await wait(1000);
+  const {dx,dy}=flyVec();ov.classList.remove("on");
+  const a=fly.animate([{transform:"translate(0,0) scale(1) rotate(0deg)",opacity:1},{opacity:1,offset:.6},{transform:`translate(${dx}px,${dy}px) scale(.08) rotate(20deg)`,opacity:0}],{duration:RM()?1:700,easing:"cubic-bezier(.55,0,.8,.4)",fill:"forwards"});
+  await a.finished;
+  ov.classList.remove("show");a.cancel();
+  bk.open=false;bk.locked=false;$("#mySeeds").focus();
+}
+$("#mySeeds").onclick=openBook;
+$("#bkNext").onclick=()=>turn(1);
+$("#bkPrev").onclick=()=>turn(-1);
+$("#bkClose").onclick=closeBook;
+ov.addEventListener("click",e=>{if(e.target===ov)closeBook()});
+bookEl.addEventListener("click",async e=>{
+  const rn=e.target.closest(".pren");
+  if(rn){if(!bk.locked)openRename(rn.dataset.id);return}
+  const d=e.target.closest(".pdel");
+  if(d){
+    if(bk.locked)return;
+    if(d.dataset.armed){clearTimeout(d._t);delSeed(d.dataset.id)}
+    else{d.dataset.armed="1";d.classList.add("armed");toast("Press the trash can again to delete");d._t=setTimeout(()=>{delete d.dataset.armed;d.classList.remove("armed")},3000)}
+    return}
+  const pv=e.target.closest(".pview");
+  if(pv){if(!bk.locked)openSeedView(pv.dataset.id);return}
+  const c=e.target.closest(".pcopy");
+  if(c){const v=state.saved.find(x=>String(x.id)===c.dataset.id);
+    if(v)try{await navigator.clipboard.writeText(seedText(v));toast("Story seed copied")}catch(err){toast("Copy blocked by the browser")}
+    return}
+  const g=e.target.closest("[data-go]");if(g)return goTo(+g.dataset.go);
+  const lf=e.target.closest(".leaf");if(lf)turn(lf.classList.contains("flipped")?-1:1);
+});
+document.addEventListener("keydown",e=>{
+  if(!bk.open||sv.open||tut.open||ml.open)return;
+  if(e.key==="ArrowRight")turn(1);else if(e.key==="ArrowLeft")turn(-1);else if(e.key==="Escape")closeBook();
+});
+
+/* ---------- notes, full-screen seed, tutorial ---------- */
+const seedText=v=>v.lines.map(l=>l[0]+": "+l[1]).join("\n")+(v.notes?"\n\nNotes:\n"+v.notes:"");
+function trapTab(e,root){
+  if(e.key!=="Tab")return;
+  const f=[...root.querySelectorAll('button:not(:disabled),input,textarea,[tabindex="0"]')].filter(x=>x.offsetParent!==null);
+  if(!f.length)return;
+  const a=f[0],z=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}
+  else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}
+}
+
+/* main-page notes (kept as a draft so a reload doesn't lose them) */
+const notesEl=$("#notes");
+try{notesEl.value=localStorage.getItem("dice-notes-draft")||""}catch(e){}
+notesEl.addEventListener("input",()=>{try{localStorage.setItem("dice-notes-draft",notesEl.value)}catch(e){}});
+$("#notesSave").onclick=()=>{
+  if(!Object.keys(state.vals).length)return toast("Roll something first");
+  const v=state.saved.find(x=>x.id===state.curId);
+  if(v){v.notes=notesEl.value.trim();persistSaved();toast("Notes saved to seed")}
+  else openName();
+};
+$("#notesClear").onclick=()=>{notesEl.value="";try{localStorage.removeItem("dice-notes-draft")}catch(e){}toast("Notes cleared");notesEl.focus()};
+
+/* full-screen seed view */
+const sv={open:false,id:null,dirty:false,armed:false,t:0};
+const svOv=$("#seedOv"),svName=$("#svName"),svNotes=$("#svNotes");
+function svMark(d){
+  sv.dirty=d;sv.armed=false;
+  $("#svState").textContent=d?"Unsaved changes":"All changes saved";
+}
+function openSeedView(id){
+  const v=state.saved.find(x=>String(x.id)===String(id));if(!v)return;
+  sv.id=v.id;
+  $("#svLabel").textContent=v.label;$("#svDate").textContent=v.date||"";
+  svName.value=v.name||"";svNotes.value=v.notes||"";
+  $("#svLines").innerHTML=v.lines.map(l=>`<dt>${esc(l[0])}</dt><dd>${esc(l[1])}</dd>`).join("");
+  svMark(false);$("#svState").textContent="";renderSvMaps();
+  svOv.classList.add("show");sv.open=true;
+  svOv.querySelector(".svwrap").scrollTop=0;
+  svNotes.focus({preventScroll:true});
+}
+function saveSeedView(){
+  const v=state.saved.find(x=>x.id===sv.id);if(!v)return;
+  v.name=svName.value.trim().slice(0,40);
+  v.notes=svNotes.value.trim();
+  persistSaved();refreshBook(bk.cur);svMark(false);toast("Seed saved");
+}
+function closeSeedView(force){
+  if(!sv.open)return;
+  if(sv.dirty&&!force&&!sv.armed){
+    sv.armed=true;toast("Unsaved changes. Press Close again to discard");
+    clearTimeout(sv.t);sv.t=setTimeout(()=>{sv.armed=false},3000);return;
+  }
+  svOv.classList.remove("show");sv.open=false;sv.dirty=false;sv.armed=false;
+  $("#bkClose").focus();
+}
+svName.addEventListener("input",()=>svMark(true));
+svNotes.addEventListener("input",()=>svMark(true));
+$("#svSave").onclick=saveSeedView;
+$("#svClose").onclick=()=>closeSeedView();
+$("#svCopy").onclick=async()=>{
+  const v=state.saved.find(x=>x.id===sv.id);if(!v)return;
+  const draft={...v,notes:svNotes.value.trim()};
+  try{await navigator.clipboard.writeText(seedText(draft));toast("Story seed copied")}catch(err){toast("Copy blocked by the browser")}
+};
+svOv.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){e.preventDefault();closeSeedView()}
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();saveSeedView()}
+  else trapTab(e,svOv);
+});
+
+/* tutorial scroll */
+const tut={open:false};
+const tutOv=$("#tutOv");
+const TUT={
+ Original:{t:"How the Dice Work",o:"d20",i:"Welcome, storyteller. Here is a quick tour of everything in this little book of tales."},
+ Christmas:{t:"A Winter’s Guide",o:"snow",i:"Gather round the fire, storyteller. Here is how to conjure your holiday tale."},
+ Halloween:{t:"A Guide for the Brave",o:"moon",i:"Welcome, brave soul. Here is how to summon your spookiest stories."},
+ Easter:{t:"A Springtime Guide",o:"flower",i:"Spring has sprung, storyteller! Here is how to hatch your next tale."},
+ Valentine:{t:"A Guide for the Lovelorn",o:"heart",i:"Welcome, dear storyteller. Here is how to weave a tale of hearts."}
+};
+function openTut(){
+  if(tut.open)return;
+  const T=TUT[state.theme]||TUT.Original;
+  $("#tutT").textContent=T.t;$("#tutOrn").innerHTML=ART.svg(T.o,"#c8962e","#fff4d6");$("#tutIntro").textContent=T.i;
+  tutOv.classList.add("show");tut.open=true;document.body.style.overflow="hidden";
+  const sh=$("#tutSheet"),p=$("#tutParch");p.scrollTop=0;
+  sh.classList.add("unrolling");setTimeout(()=>sh.classList.remove("unrolling"),RM()?0:900);
+  p.focus({preventScroll:true});
+}
+function closeTut(){
+  if(!tut.open)return;
+  tutOv.classList.remove("show");tut.open=false;document.body.style.overflow="";
+  try{localStorage.setItem("dice-tutorial-seen","1")}catch(e){}
+  $("#help").focus();
+}
+$("#help").onclick=openTut;
+$("#tutOk").onclick=closeTut;
+tutOv.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){e.preventDefault();closeTut()}else trapTab(e,tutOv);
+});
+tutOv.addEventListener("click",e=>{if(e.target===tutOv)closeTut()});
+
+/* ---------- bigger tables and your own suggestions ---------- */
+const MORE={
+ "Original": {
+  "hook": [
+   "A tavern brawl spills into the street and reveals a hidden cult mark",
+   "A caravan arrives with every driver dead and the cargo missing",
+   "The town’s river runs red at dawn and no one will say why",
+   "A child draws a map of a place she has never been",
+   "A noble hires you to retrieve something from their own vault",
+   "A rival adventuring party vanishes, leaving only their camp behind",
+   "The dead in the village cemetery have started knocking from below",
+   "A talking raven delivers a warning in a dead hero’s voice",
+   "A bounty is posted for you, signed with your own name",
+   "An earthquake exposes a staircase that was never on any map",
+   "A traveling circus sets up camp, and the performers never blink",
+   "The local temple’s bells ring on their own, counting down"
+  ],
+  "motive": [
+   "To finish the great work their master left unfinished",
+   "To prove to the world they were never the fool it believed",
+   "To protect a secret that would topple the crown",
+   "Because a bargain with something old demands payment",
+   "To restore a homeland that no longer exists",
+   "Obsession with a single, impossible object of desire",
+   "To end a war by making sure neither side can win",
+   "Jealousy of someone who has everything they were denied",
+   "A conviction that the gods owe them an answer",
+   "To preserve the world by freezing it exactly as it is"
+  ],
+  "twist": [
+   "The map was drawn by the villain, to lead you here",
+   "One of the party was the intended victim all along",
+   "The monster is the last guardian of something precious",
+   "The prophecy was mistranslated, and means the opposite",
+   "The rescued prisoner is the real mastermind",
+   "The treasure everyone seeks is already in your pack",
+   "The kingdom’s ruler died years ago and no one admitted it",
+   "Time has been flowing differently since you arrived"
+  ],
+  "complication": [
+   "A rival party reaches the goal first and demands a share",
+   "An uninvited guest insists on joining and will not be refused",
+   "A key item is damaged and needs a rare repair",
+   "The weather turns into something unnatural and hostile",
+   "A false rumor spreads and the locals turn cold",
+   "A bargain made earlier now comes with a surprise condition"
+  ],
+  "place": [
+   "A lighthouse that guides ships to something other than harbor",
+   "A floating island tethered to the ground by golden chains",
+   "A bathhouse whose waters show the bather’s regrets",
+   "A mine whose lanterns burn without oil and never go out",
+   "A graveyard where every headstone bears the same name",
+   "A monastery carved into the underside of a cliff",
+   "A clockwork town that resets every midnight",
+   "A frozen waterfall hiding a hollow full of murmuring statues",
+   "A battlefield where the fallen still drill at dusk",
+   "A grand hotel with one more floor than the stairs admit"
+  ],
+  "reward": [
+   "A magic item that grants a wish, but twists the wording",
+   "The loyalty of a powerful creature, tested at the worst time",
+   "A hidden inheritance and the relatives who want it back",
+   "A safe haven for the party, owned by someone with an agenda",
+   "A rare skill taught freely, at the cost of a favor owed",
+   "A fortune in coin, cursed to attract thieves"
+  ]
+ },
+ "Christmas": {
+  "hook": [
+   "The village Yule log refuses to burn, however much you stoke it",
+   "A reindeer wanders into town wearing a collar with your name",
+   "Every candle in the church gutters out at the same moment",
+   "A child’s wish list arrives, and half of it is written in blood",
+   "The star atop the great tree begins to speak in the night",
+   "Snow falls upward over one house, and no one will go near it",
+   "A stranger in a red cloak asks for shelter and pays in old gold",
+   "The twelve days of the festival begin early, and something is counting them",
+   "A music box plays a carol that no one has ever composed",
+   "The bell-ringer is found frozen, smiling, with his bells missing",
+   "A sleigh lands on the green with no driver and no tracks",
+   "Gifts appear on doorsteps, each one addressed to a secret"
+  ],
+  "motive": [
+   "To be remembered kindly after centuries of being feared",
+   "To give one perfect Yuletide to someone who never had one",
+   "To collect an old debt owed on the longest night",
+   "Resentment of everyone who got a gift when they got none",
+   "To keep winter from ever ending",
+   "To make sure the naughty list gets what it has coming",
+   "A wish made on a snowfall that must be paid back",
+   "Loneliness so deep it chills the very hearth",
+   "To steal the holiday’s warmth for their own cold hall",
+   "Duty to a tradition no one else remembers the reason for"
+  ],
+  "twist": [
+   "The generous benefactor is the one who cursed the village",
+   "The monster in the snow was only guarding a lost child",
+   "The festival’s gifts all came from the same hidden giver",
+   "The carolers are not from this year, or this century",
+   "The villain is the one person who truly loves winter",
+   "The gift you were told never to open is the key to everything",
+   "The elf you trusted works for the other side",
+   "Spring will not come unless something is sacrificed"
+  ],
+  "complication": [
+   "A blizzard buries the roads and the pantry is half empty",
+   "The sleigh’s runners crack at the worst moment",
+   "Frostbite and fever slow the party down",
+   "A well-meaning host insists on one more feast",
+   "Wolves have learned to follow the sound of bells",
+   "The only inn is full of guests who all know each other’s secrets"
+  ],
+  "place": [
+   "A frozen lake with a lit window glowing beneath the ice",
+   "A toy workshop that has run unattended for a hundred winters",
+   "A snowed-in chapel where the choir never stopped singing",
+   "A mountain pass lined with candle-lit shrines",
+   "A mulled-wine cellar older than the village above it",
+   "A tree farm where every pine seems to look back at you",
+   "A glittering ice palace melting from the inside",
+   "An orphanage decorated for a feast that never ends",
+   "A cabin in the woods with a table set for guests",
+   "A clock tower that chimes the hours of a different season"
+  ],
+  "reward": [
+   "A gift that gives its owner exactly what they need, not what they want",
+   "A lantern that never goes out and leads home from anywhere",
+   "A seat of honor at the yearly feast, with the obligations that follow",
+   "A sleigh and team that obey only a kind heart",
+   "A promise of aid from the spirits of winter, usable once",
+   "A bag of coal that turns to gold, and back to coal if you boast"
+  ]
+ },
+ "Halloween": {
+  "hook": [
+   "Every jack-o’-lantern in town turns to face the same house",
+   "The scarecrow in the north field was not there yesterday",
+   "A trick-or-treater knocks in a costume made of real bone",
+   "The church bell tolls thirteen times, and the dead sit up",
+   "A fog rolls in carrying the smell of old graves",
+   "A mirror in the inn shows a room that isn’t there",
+   "The harvest moon rises red and the animals fall silent",
+   "A hanged man’s noose is found swinging, freshly tied",
+   "Candy left on the porch vanishes, and in its place, a name",
+   "A black cat leads you to a door in the woods",
+   "A masquerade invites guests who died years ago",
+   "The old orchard has begun bearing fruit that whispers"
+  ],
+  "motive": [
+   "To be invited back among the living for one night",
+   "To finish a ritual interrupted three hundred years ago",
+   "To make the town remember a crime it chose to forget",
+   "A hunger that only fear can feed",
+   "To trade a soul for another night of life",
+   "Sorrow that took the shape of a haunting",
+   "To prove that costumes can become real",
+   "To collect the debt every family line carries",
+   "Loyalty to a master sleeping beneath the hill",
+   "To keep the veil thin just a little longer"
+  ],
+  "twist": [
+   "The ghost is the only one trying to warn you",
+   "The witch was never cursing the town; she was holding the curse back",
+   "The costume party’s guests are all the same person",
+   "The monster wears a mask over a still-living face",
+   "The candy is the poison, and the curse is the cure",
+   "Dawn will not come until the ritual is finished",
+   "Your own reflection stepped out of the mirror hours ago",
+   "The haunted house is the one safe place in the valley"
+  ],
+  "complication": [
+   "The lanterns die and the fog hides the path",
+   "A crowd of costumed strangers blocks the road, silent",
+   "The party is separated by a door that will not open twice",
+   "A scream from nowhere sends the horses bolting",
+   "A trusted friend begins to speak in someone else’s voice",
+   "The moon is hidden, and with it the usual rules"
+  ],
+  "place": [
+   "A pumpkin patch that grows toward the sound of footsteps",
+   "A moonlit mausoleum with fresh flowers on every crypt",
+   "A haunted hayride that follows a route never plotted",
+   "A mansion that the fog hides in daylight",
+   "A cornfield maze with a center that shifts",
+   "A cemetery gate that opens only when no one watches",
+   "A cellar full of jars, each holding a faint, flickering light",
+   "A witch’s cottage on chicken legs, standing in a bog",
+   "A carnival tent pitched on an old gallows hill",
+   "An abandoned schoolhouse where the bell still rings at midnight"
+  ],
+  "reward": [
+   "A lantern lit with a captured soul that banishes any shadow",
+   "A cloak that lets the wearer pass unseen among the dead",
+   "A single wish, granted by something that grins too widely",
+   "An heirloom that protects the family but marks them forever",
+   "The friendship of a spirit who owes you one night of service",
+   "A sack of enchanted candy, with side effects"
+  ]
+ },
+ "Easter": {
+  "hook": [
+   "A giant egg hums in the meadow and begins to crack",
+   "The spring festival’s baskets are all empty by morning",
+   "A rabbit in a waistcoat checks a pocket watch and runs for a hole in the hill",
+   "Flowers bloom in the middle of a frozen road",
+   "The baker’s hot cross buns have started to hum",
+   "Children report a rabbit who leaves riddles instead of eggs",
+   "A rainbow touches down in a field that was barren yesterday",
+   "A shepherd finds her whole flock painted in bright colors",
+   "The village well overflows with dye in every shade",
+   "A wreath of lilies appears on a door that has been bricked up",
+   "A lost lamb leads you to a hidden garden",
+   "The first sunrise of spring is late, and the sun is nowhere"
+  ],
+  "motive": [
+   "To bring spring to a place that has refused it for years",
+   "To hatch something that should have stayed buried",
+   "To prove that rebirth does not require forgiveness",
+   "Wanting the festival to last forever",
+   "To reclaim a garden taken by an unkind lord",
+   "Fear that the new season will leave them behind",
+   "To hide the truth of what the eggs really contain",
+   "A promise made to the last of the old spring spirits",
+   "To outshine a rival gardener at all costs",
+   "To keep every secret buried under fresh flowers"
+  ],
+  "twist": [
+   "The Hare was the one who stole the eggs, to protect them",
+   "The spring queen is the one sustaining the endless winter",
+   "The prize egg holds not treasure but a creature",
+   "The festival is a disguise for a very old ritual",
+   "The painted eggs are a map to a buried vault",
+   "The villain is a gardener who only wanted something to bloom",
+   "The lamb you rescued is the true heir",
+   "Spring is arriving, whether or not you stop what is coming"
+  ],
+  "complication": [
+   "A late frost threatens every seedling in the valley",
+   "Mud swallows the road and the wagon wheel",
+   "A swarm of bees mistakes the party for a hive",
+   "A flock of excitable geese guards the only bridge",
+   "The rain washes away the clues, one by one",
+   "A stubborn host insists you eat before you go anywhere"
+  ],
+  "place": [
+   "A sun-soaked meadow where every flower has a face",
+   "A burrow city beneath a hill, lit with glowing lanterns",
+   "An orchard in permanent blossom, humming with bees",
+   "A pastel village where all the doors are painted shut",
+   "A riverbank where the willows whisper secrets",
+   "A greenhouse cathedral overgrown with night-blooming flowers",
+   "A hillside decorated for a festival no one remembers starting",
+   "A candy-colored fairground long since abandoned",
+   "A hidden glade where a ring of toadstools marks a gate",
+   "A dovecote tower with a hundred nests and one empty one"
+  ],
+  "reward": [
+   "A basket that never empties, but never holds the same thing twice",
+   "A seed that grows into whatever the planter needs most",
+   "The blessing of the hare, which brings good luck and strange dreams",
+   "A golden egg whose contents depend on who opens it",
+   "A promise of shelter from the spring spirits, when winter returns",
+   "A crown of flowers that makes its wearer impossible to lie to"
+  ]
+ },
+ "Valentine": {
+  "hook": [
+   "A love letter arrives for you, addressed in your own handwriting",
+   "Every couple in the village has begun to argue at the same hour",
+   "A masked stranger leaves a rose on every doorstep, thorns stained red",
+   "A heart-shaped lock is found on a door that was never there",
+   "A matchmaker offers a perfect partner, for a small price",
+   "A duel is declared over a name no one will admit to knowing",
+   "The town’s love poems have all started to rhyme with death",
+   "A music box plays a waltz and a ghost begins to dance",
+   "A pair of lovers asks you to help them vanish",
+   "Cupid’s arrows are going missing from the shrine",
+   "A portrait in the manor weeps whenever anyone speaks of love",
+   "A sealed envelope holds a confession no one wants delivered"
+  ],
+  "motive": [
+   "To win back a love lost to an unfair war",
+   "To make a rival pay for a broken promise",
+   "To feel something, anything, after years of nothing",
+   "Devotion so complete it has curdled into possession",
+   "To protect a secret romance that could topple a house",
+   "To prove that a love potion works, at any cost",
+   "To undo a vow spoken in haste",
+   "Grief for a spouse the world has forgotten",
+   "To keep a lover young by feeding on someone else’s years",
+   "Vanity: they cannot bear to be second choice"
+  ],
+  "twist": [
+   "The letters were all written by the same hand, for different people",
+   "The villain is a lover, and the victim agreed",
+   "The curse was cast out of love, not hate",
+   "The matchmaker has been engineering heartbreak for centuries",
+   "The beloved everyone seeks is not a person at all",
+   "Your own heart has been bargained away without your knowledge",
+   "The rival suitors are the same spirit in different faces",
+   "True love will break the curse, but only if it is not for you"
+  ],
+  "complication": [
+   "A jealous rival spreads rumors that shut every door",
+   "A chaperone watches every move with unnerving skill",
+   "Your gift is misdelivered to the wrong, dangerous person",
+   "A love potion is accidentally spilled into the punch",
+   "A formal ball requires a dance partner you do not have",
+   "Hearts are literally fluttering, and the animals are acting strangely"
+  ],
+  "place": [
+   "A garden maze where roses grow in the shapes of names",
+   "A masquerade ballroom with mirrors that reflect only lovers",
+   "A chocolatier’s shop where every sweet reveals a feeling",
+   "A bridge hung with locks, one for every promise made",
+   "An opera house with a private box that no one sells",
+   "A rose-covered cemetery for those who died of heartbreak",
+   "A balcony that overlooks a city no one can name",
+   "A letter office where undelivered love notes are kept",
+   "A candlelit cellar where an old wine ages with a lover’s tears",
+   "A tower with a single window and a ladder of braided hair"
+  ],
+  "reward": [
+   "A ring that glows whenever someone nearby tells the truth",
+   "A single dance with a patron whose favor opens any door",
+   "A vial of an elixir that will mend one broken heart",
+   "A letter of introduction to a house that was closed to you",
+   "A rose that never wilts, and never forgets who gave it",
+   "A confession that frees someone from a long-standing curse"
+  ]
+ }
+};
+for(const th in MORE)for(const k in MORE[th])THEMES[th].items[k]=THEMES[th].items[k].concat(MORE[th][k]);
+const CUS=(()=>{try{return JSON.parse(localStorage.getItem("dice-custom")||"{}")}catch(e){return{}}})();
+const saveCus=()=>{try{localStorage.setItem("dice-custom",JSON.stringify(CUS))}catch(e){toast("Storage full: suggestion not kept")}};
+const dieShape=n=>n<=6?"s6":n<=8?"s8":n<=10?"s10":n<=12?"s12":n<=16?"s16":n<=20?"s20":"s24";
+const MAXD={hook:20,motive:12,twist:10,complication:8,place:10,reward:8};
+const ACT=(()=>{try{return JSON.parse(localStorage.getItem("dice-active")||"{}")}catch(e){return{}}})();
+const saveAct=()=>{try{localStorage.setItem("dice-active",JSON.stringify(ACT))}catch(e){toast("Storage full: choices not kept")}};
+const REM=(()=>{try{return JSON.parse(localStorage.getItem("dice-removed")||"{}")}catch(e){return{}}})();
+const saveRem=()=>{try{localStorage.setItem("dice-removed",JSON.stringify(REM))}catch(e){toast("Storage full: removal not kept")}};
+const setAct=(t,list)=>{(ACT[state.theme]=ACT[state.theme]||{})[t.key]=list;saveAct()};
+function activeOf(t){
+  const mx=MAXD[t.key],saved=(ACT[state.theme]||{})[t.key];
+  let a=saved?t.items.filter(x=>saved.includes(x)):[];
+  if(!a.length)a=t.items.slice(0,mx);
+  return a.slice(0,mx);
+}
+function syncTable(t){
+  const cu=(CUS[state.theme]||{})[t.key]||[],mx=MAXD[t.key];
+  let rm=(REM[state.theme]||{})[t.key]||[];
+  let bv=t.base.filter(x=>!rm.includes(x));
+  if(!bv.length&&!cu.length){delete (REM[state.theme]||{})[t.key];rm=[];bv=t.base.slice();saveRem()}
+  const nb=bv.length;
+  t.items=[...bv,...cu];t.sides=mx;t.active=activeOf(t);
+  const el=$("#slot-"+t.key),die=el.querySelector(".die");
+  die.className=die.className.replace(/\bs\d+\b/,dieShape(mx));
+  el.querySelector(".die small").textContent="d"+mx;
+  el.querySelector("summary").textContent="See the full table ("+t.active.length+" of "+mx+" active)";
+  const ol=el.querySelector("details ol");
+  let bar=el.querySelector(".tbar");
+  if(!bar){bar=document.createElement("div");bar.className="tbar";bar.innerHTML='<span class="tcount"></span><button type="button" data-act="deftab">Reset switches</button><button type="button" data-act="restore" hidden></button>';ol.before(bar)}
+  bar.querySelector(".tcount").textContent=t.active.length+" of "+mx+" active. Switch entries on or off to choose what the die can roll.";
+  const rb=bar.querySelector('[data-act="restore"]');rb.hidden=!rm.length;rb.textContent="Restore removed ("+rm.length+")";
+  const cur=state.vals[t.key];
+  ol.innerHTML=t.items.map((i,n)=>{
+    const on=t.active.includes(i);
+    return `<li data-i="${n}" class="${on?"on":"off"}${n>=nb?" cus":""}${on&&i===cur?" hit":""}"><label class="tg"><input type="checkbox" data-i="${n}"${on?" checked":""}><span class="tgsw"></span><span class="tx">${esc(i)}</span></label><button class="rmcus" data-n="${n}" aria-label="Remove this entry" title="Remove this entry">×</button></li>`;
+  }).join("");
+}
+const addS={t:null},addOv=$("#addOv");
+function openAdd(t){
+  addS.t=t;$("#addT").textContent="Add to “"+t.name+"”";
+  $("#addHint").textContent="Saved on this device for the "+state.theme+" theme. It switches on automatically while the die has room. Press Ctrl+Enter to add.";
+  $("#addIn").value="";addOv.classList.add("show");$("#addIn").focus();
+}
+function closeAdd(){addOv.classList.remove("show");const b=addS.t&&$("#slot-"+addS.t.key+" [data-act=add]");if(b)b.focus()}
+function commitAdd(){
+  const t=addS.t,v=$("#addIn").value.trim().replace(/\s+/g," ");
+  if(!v)return toast("Write something first");
+  if(t.items.some(x=>x.toLowerCase()===v.toLowerCase()))return toast("That suggestion is already in the table");
+  const th=state.theme,rl=(REM[th]||{})[t.key]||[],ri=rl.findIndex(x=>x.toLowerCase()===v.toLowerCase());
+  if(ri>=0){rl.splice(ri,1);saveRem();syncTable(t);$("#addIn").value="";$("#addIn").focus();return toast("That built-in entry was restored")}
+  CUS[th]=CUS[th]||{};const arr=CUS[th][t.key]=CUS[th][t.key]||[];
+  if(arr.length>=50)return toast("Limit of 50 custom suggestions per table");
+  const room=t.active.length<MAXD[t.key];
+  arr.push(v);saveCus();
+  t.items=[...t.base,...arr];
+  if(room)setAct(t,[...t.active,v]);
+  syncTable(t);
+  $("#addIn").value="";$("#addIn").focus();
+  toast(room?"Added to "+t.name+" and switched on":"Added, but the d"+MAXD[t.key]+" is full. Switch another entry off to use it");
+}
+$("#addOk").onclick=commitAdd;$("#addDone").onclick=closeAdd;
+addOv.addEventListener("click",e=>{if(e.target===addOv)closeAdd()});
+addOv.addEventListener("keydown",e=>{
+  e.stopPropagation();
+  if(e.key==="Escape"){e.preventDefault();closeAdd()}
+  else if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();commitAdd()}
+  else trapTab(e,addOv);
+});
+$("#grid").addEventListener("click",e=>{
+  const a=e.target.closest('[data-act="add"]');
+  if(a){openAdd(TABLES.find(t=>t.key===a.closest(".slot").id.slice(5)));return}
+  const dt=e.target.closest('[data-act="deftab"]');
+  if(dt){const t=TABLES.find(x=>x.key===dt.closest(".slot").id.slice(5));if(ACT[state.theme])delete ACT[state.theme][t.key];saveAct();syncTable(t);toast("Switches reset to the default selection");return}
+  const rs=e.target.closest('[data-act="restore"]');
+  if(rs){const t=TABLES.find(x=>x.key===rs.closest(".slot").id.slice(5));if(REM[state.theme])delete REM[state.theme][t.key];saveRem();syncTable(t);toast("Removed entries restored");return}
+  const r=e.target.closest(".rmcus");
+  if(r){
+    e.preventDefault();
+    if(!r.dataset.armed){r.dataset.armed="1";r.textContent="Remove?";r.classList.add("armed");setTimeout(()=>{if(r.isConnected){delete r.dataset.armed;r.textContent="×";r.classList.remove("armed")}},3000);return}
+    const t=TABLES.find(x=>x.key===r.closest(".slot").id.slice(5)),item=t.items[+r.dataset.n];
+    if(t.items.length<=1)return toast("A table needs at least one entry");
+    const th=state.theme,cus=(CUS[th]||{})[t.key]||[],ci=cus.indexOf(item);
+    if(ci>=0){cus.splice(ci,1);saveCus()}
+    else{REM[th]=REM[th]||{};(REM[th][t.key]=REM[th][t.key]||[]).push(item);saveRem()}
+    if((ACT[th]||{})[t.key]){ACT[th][t.key]=ACT[th][t.key].filter(x=>x!==item);saveAct()}
+    syncTable(t);toast(ci>=0?"Entry removed":"Entry removed. Use Restore removed to bring it back");
+  }
+});
+
+$("#grid").addEventListener("change",e=>{
+  const c=e.target.closest("input[type=checkbox][data-i]");if(!c)return;
+  const t=TABLES.find(x=>x.key===c.closest(".slot").id.slice(5)),item=t.items[+c.dataset.i],mx=MAXD[t.key];
+  let act=t.active.slice();
+  if(c.checked){
+    if(act.length>=mx){c.checked=false;return toast("A d"+mx+" holds up to "+mx+" entries. Switch another off first")}
+    act=t.items.filter(x=>act.includes(x)||x===item);
+  }else{
+    if(act.length<=1){c.checked=true;return toast("Keep at least one entry switched on")}
+    act=act.filter(x=>x!==item);
+  }
+  setAct(t,act);syncTable(t);
+});
+
+/* ---------- custom art: vector glyph library ---------- */
+const ART=(()=>{
+const K="#1d1611",W="#fff4d6",sk="#f1c9a0";
+const P=(d,f)=>`<path d="${d}" fill="${f}"/>`,
+C=(x,y,r,f)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>`,
+E=(x,y,w,h,f)=>`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="${f}"/>`,
+R=(x,y,w,h,f,r)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r||0}" fill="${f}"/>`,
+L=(d,c,w)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}"/>`,
+S=(d,c,w)=>L(d,K,w+2.6)+L(d,c,w),
+M=x=>x+`<g transform="translate(32 0) scale(-1 1)">${x}</g>`,
+EY=(y,c,x,r)=>C(x,y,r,c)+C(32-x,y,r,c),
+rot=(s,deg,cx,cy)=>s.replace("/>",` transform="rotate(${deg} ${cx} ${cy})"/>`);
+const G={
+hood:(a,b)=>P("M16 2C10 2 7 7 7 12c0 3 1 5 2 6L4 30h24l-5-12c1-1 2-3 2-6 0-5-3-10-9-10z",a)+P("M16 8c-4 0-6 3-6 6s2 5 6 5 6-2 6-5-2-6-6-6z","#2a1d16")+EY(14,"#ffd966",13,1.1),
+wizard:(a,b)=>P("M16 1l8 17H8z",a)+E(16,18,12,3,b)+C(16,23,5,sk)+P("M11 24c1 5 4 7 5 7s4-2 5-7z","#e8e8e8")+EY(22,K,14,.9),
+orb:(a,b)=>C(16,14,10,a)+C(12,10,3,W)+P("M8 28h16l-3-6H11z",b),
+eye:(a,b)=>P("M2 16C8 6 24 6 30 16 24 26 8 26 2 16z","#f5ecd7")+C(16,16,6.5,a)+C(16,16,3,K)+C(14.5,14.5,1,"#fff"),
+sun:(a,b)=>{let r="";for(let i=0;i<8;i++)r+=rot(P("M16 1l2.5 7h-5z",b),i*45,16,16);return r+C(16,16,7.5,a)},
+shield:(a,b)=>P("M16 2l11 4v9c0 8-5 13-11 15C10 28 5 23 5 15V6z",a)+P("M16 2v28c6-2 11-7 11-15V6z",b)+L("M16 9v12M11 14h10",W,2),
+helm:(a,b)=>P("M16 3C10 3 6 7 6 13v14h6v-5h8v5h6V13c0-6-4-10-10-10z",a)+R(9,12,14,4,K)+P("M15 3h2v8h-2z",b),
+axe:(a,b)=>S("M8 29L22 7","#7a4a24",3.5)+P("M14 6c6-5 14-2 14-2-1 7-6 12-12 11z",a),
+face:(a,b)=>C(16,17,10,sk)+P("M6 16C6 8 11 4 16 4s10 4 10 12c-3-4-7-5-10-5s-7 1-10 5z",a)+EY(18,K,12.5,1.2)+L("M13 23q3 2 6 0","#8a4a3a",1.2),
+bow:(a,b)=>S("M9 3C22 6 22 26 9 29",a,3)+L("M9 3v26","#d8c8a8",1)+L("M5 16h21","#8a5a2e",2)+P("M24 12l6 4-6 4z","#cfd6dd"),
+leaf:(a,b)=>P("M5 27C3 12 14 4 28 4c0 14-8 24-23 23z",a)+L("M5 27L22 10",b,2),
+lute:(a,b)=>C(12,21,8,a)+C(12,21,2.5,K)+S("M18 15L28 5",b,3)+P("M25 2l5 5-3 3-5-5z","#7a4a24"),
+gear:(a,b)=>{let r="";for(let i=0;i<8;i++)r+=rot(R(13.5,2,5,7,a,1),i*45,16,16);return r+C(16,16,9,a)+C(16,16,4,b)},
+elf:(a,b)=>P("M2 10l9 5-2 6zM30 10l-9 5 2 6z",sk)+C(16,17,9.5,sk)+P("M6 16C6 7 11 3 16 3s10 4 10 13c-3-4-7-5-10-5s-7 1-10 5z",a)+EY(18,"#3a8a4a",12.5,1.3),
+dwarf:(a,b)=>C(16,14,9,sk)+P("M6 14c0 11 4 17 10 17s10-6 10-17c-2 3-6 4-10 4s-8-1-10-4z",b)+P("M6 11C6 4 11 2 16 2s10 2 10 9z",a)+EY(13,K,12.5,1.1),
+horned:(a,b)=>P("M7 12C3 9 3 3 3 3c5 1 8 3 9 7zM25 12c4-3 4-9 4-9-5 1-8 3-9 7z",b)+C(16,18,10,a)+EY(16,"#ffe08a",12,1.5)+L("M12 24q4 3 8 0",K,1.4),
+dragon:(a,b)=>M(P("M16 6L9 7 3 2l1 9 4 5-2 6 6 6 4 1z",a)+P("M9 13l5 1-1 3z","#ffcf40")+C(14,24,1,K)),
+fish:(a,b)=>E(14,16,11,8,a)+P("M23 16l8-7v14z",b)+C(8,14,1.4,K)+L("M14 9c2 4 2 10 0 14",b,1.2),
+flame:(a,b)=>P("M16 2c1 6 8 9 8 17a8 8 0 01-16 0c0-4 2-6 3-8 1 3 2 4 3 4 0-5-1-9 2-13z",a)+P("M16 15c1 3 4 5 4 8a4 4 0 01-8 0c0-3 3-4 4-8z",b),
+fire:(a,b)=>S("M5 27L27 23M5 23L27 27","#7a4a24",3.2)+`<g transform="translate(4 -3) scale(.75)">${G.flame(a,b)}</g>`,
+dagger:(a,b)=>P("M16 2l3.5 15h-7z","#d8dde3")+R(9,17,14,3,a,1)+R(14.5,20,3,9,b,1)+C(16,30,1.8,a),
+crown:(a,b)=>P("M3 25L2 10l7 6 7-11 7 11 7-6-1 15z",a)+R(3,25,26,4,b,1)+C(16,11,1.6,"#d6322a"),
+cross:(a,b)=>P("M12 3h8v9h9v8h-9v9h-8v-9H3v-8h9z",a)+P("M14 6h4v7h7v4h-7v7h-4v-7H7v-4h7z",b),
+goblin:(a,b)=>P("M1 9l9 4-2 7zM31 9l-9 4 2 7z",a)+C(16,17,10,a)+EY(15,"#ffe14d",12,1.8)+EY(15,K,12,.8)+P("M16 17l-2 4h4z",b)+P("M11 24l2 3 2-3 2 3 2-3z",W),
+brute:(a,b)=>P("M3 14c0-8 6-11 13-11s13 3 13 11c0 8-5 15-13 15S3 22 3 14z",a)+P("M5 11h22l-2 4H7z",b)+EY(15,"#ffe14d",11.5,1.3)+C(16,21,3,b),
+orc:(a,b)=>G.brute(a,b)+M(P("M10 25l-2-7 4 4z",W)),
+lizard:(a,b)=>P("M16 2c3 0 4 3 4 5l5-3 1 3-4 4 2 5 5 1-1 3-5 0-3 6c0 3-1 5-3 5s-3-2-3-5l-3-6-5 0-1-3 5-1 2-5-4-4 1-3 5 3c0-2 1-5 4-5z",a)+EY(8,"#ffe14d",14,1)+L("M16 12v14",b,2),
+frog:(a,b)=>E(16,20,13,8.5,a)+C(9,11,5,a)+C(23,11,5,a)+C(9,11,2.6,W)+C(23,11,2.6,W)+C(9,11,1.2,K)+C(23,11,1.2,K)+L("M8 22q8 5 16 0",K,1.5)+E(16,25,5,2,b),
+wolf:(a,b)=>M(P("M16 9L11 9 4 2l1 12 3 6-3 6 6 5 5 0z",a))+P("M16 17l-5 4 5 5 5-5z",b)+C(16,23,1.8,K)+EY(14,"#ffe08a",11.5,1.4),
+spider:(a,b)=>M(L("M12 14L4 8M12 16L2 16M12 18L4 26M13 20L8 30",K,2.2))+E(16,21,6,7.5,a)+C(16,12,5,a)+EY(11,"#ff5a5a",14,1.1),
+golem:(a,b)=>P("M7 3h18l3 8v14l-4 4H8l-4-4V11z",a)+P("M7 3h18l3 8H4z",b)+R(8,13,6,4,"#ffb347")+R(18,13,6,4,"#ffb347")+L("M11 24h10",K,2),
+cube:(a,b)=>P("M16 2l12 7v14l-12 7-12-7V9z",a)+P("M16 2l12 7-12 7L4 9z",b)+L("M16 16v14",K,1.2),
+flag:(a,b)=>S("M7 3v27","#7a4a24",2.5)+P("M7 4h20l-5 6 5 6H7z",a)+C(14,10,2,b),
+burst:(a,b)=>P("M16 1l3.5 8 8.5-2-4 8 7 5-9 1-1 9-5-7-5 7-1-9-9-1 7-5-4-8 8.5 2z",a)+C(16,16,4,b),
+tentacle:(a,b)=>S("M8 17c0 5-2 6-4 9M13 17c0 6-1 8-3 11M19 17c0 6 1 8 3 11M24 17c0 5 2 6 4 9",a,3)+P("M6 15C6 7 10 3 16 3s10 4 10 12c0 2-1 3-2 3H8c-1 0-2-1-2-3z",a)+EY(11,W,12,1.7)+EY(11,K,12,.7),
+scorpion:(a,b)=>S("M16 14c0-7 2-10 7-10 3 0 3 4 1 5",a,3.4)+E(16,21,7,8,a)+M(C(6,11,4,a))+EY(18,K,13.5,1),
+worm:(a,b)=>{let r="";for(let i=0;i<5;i++)r+=C(6+i*5,24-i*4.5,5.2,i%2?a:b);return r+C(25,5,1,K)+C(28,6,1,K)},
+bug:(a,b)=>M(`<ellipse cx="8" cy="14" rx="7" ry="4" fill="#dfe8ee" opacity=".85" transform="rotate(-25 8 14)"/>`)+E(16,21,6,9,a)+C(16,9,5,a)+L("M11 20h10M11 24h10",b,2)+EY(8,"#ff5a5a",14,1),
+bat:(a,b)=>M(P("M16 11L13 4l-1 6C9 8 5 8 1 11c3 2 3 5 3 8 2-2 4-2 5 0 1-2 3-2 4 0l3 5z",a))+C(16,15,4.5,a)+EY(14,"#ff6a6a",14,1.1),
+rat:(a,b)=>C(7,9,5,a)+C(25,9,5,a)+C(7,9,2.5,"#f4a8be")+C(25,9,2.5,"#f4a8be")+E(16,19,9,10,a)+P("M16 28l-3-6h6z",b)+C(16,26.5,1.4,"#f4a8be")+EY(16,K,12,1.2),
+snake:(a,b)=>S("M7 28c-4-5 1-8 9-8 7 0 9-4 3-8-5-4-1-8 7-6",a,4.5)+C(26,6,3.5,a)+C(27,5,.9,K),
+shroom:(a,b)=>R(12,16,8,13,"#efe3c6",3)+P("M2 18C2 8 8 3 16 3s14 5 14 15z",a)+C(10,11,2.4,b)+C(20,9,2,b)+C(16,15,1.8,b)+C(25,14,1.6,b),
+blob:(a,b)=>P("M4 24c0-8 4-8 5-14 1-4 5-6 8-4 4 1 5 5 6 8 2 3 5 5 5 10 0 4-3 6-8 6H12c-5 0-8-2-8-6z",a)+C(12,18,3,W)+C(21,18,3,W)+C(12.5,18.5,1.4,K)+C(21.5,18.5,1.4,K)+C(10,12,2,b),
+chest:(a,b)=>R(3,13,26,15,a,2)+P("M3 15C3 8 8 4 16 4s13 4 13 11z",b)+R(3,17,26,2,K)+R(13,16,6,7,"#e0b23a",1)+C(16,19,1.2,K),
+fang:(a,b)=>P("M8 4h16c1 12-3 20-8 25C11 24 7 16 8 4z",a),
+bird:(a,b)=>M(P("M16 6L12 7 6 3v14c0 7 4 12 10 12z",a))+C(11.5,14,4,W)+C(20.5,14,4,W)+C(11.5,14,1.8,K)+C(20.5,14,1.8,K)+P("M16 17l-2.5 4h5z",b),
+lion:(a,b)=>C(16,16,14,b)+C(16,17,9.5,a)+C(8,8,3.5,a)+C(24,8,3.5,a)+EY(15,K,12.5,1.3)+P("M16 19l-3 3h6z","#8a4a3a")+L("M16 22v3",K,1),
+snow:(a,b)=>{let r="";for(let i=0;i<3;i++)r+=rot(L("M16 3v26",b,2.2),i*60,16,16);return r+C(16,16,3,a)},
+bolt:(a,b)=>P("M19 1L6 18h8l-3 13 15-19h-9z",a),
+potion:(a,b)=>R(13,2,6,5,"#c8a878",1)+P("M13 7h6v6c5 3 8 7 8 12 0 4-4 6-11 6S5 29 5 25c0-5 3-9 8-12z",W)+P("M7 21h18c1 2 1 3 1 4 0 3-4 5-10 5S6 28 6 25z",a)+C(12,23,1.4,b)+C(19,26,1.2,b),
+coin:(a,b)=>C(16,16,13,a)+C(16,16,9.5,b)+C(16,16,6,a),
+moon:(a,b)=>P("M22 3a13 13 0 100 26A10 10 0 0122 3z",a),
+skull:(a,b)=>P("M16 3C9 3 5 8 5 14c0 4 2 6 4 7v5h3v-3h2v3h4v-3h2v3h3v-5c2-1 4-3 4-7 0-6-4-11-11-11z",a)+C(11.5,14,3,K)+C(20.5,14,3,K)+P("M16 17l-2 4h4z",K),
+drop:(a,b)=>P("M16 2C10 11 6 15 6 20a10 10 0 0020 0c0-5-4-9-10-18z",a)+L("M11 20c0 3 2 5 5 5",b,2),
+wind:(a,b)=>S("M3 10h17a4 4 0 100-5",a,2.4)+S("M3 17h23a4 4 0 110 5",a,2.4)+S("M3 24h12a3 3 0 110 4",b,2.4),
+rock:(a,b)=>P("M5 26L3 15 9 8l8-3 8 4 5 8-2 9z",a)+P("M9 8l8-3 8 4-8 3z",b)+L("M17 12l-3 14",K,1),
+fairy:(a,b)=>M(`<ellipse cx="8" cy="12" rx="7" ry="4.5" fill="${b}" opacity=".85" transform="rotate(-30 8 12)"/><ellipse cx="9" cy="21" rx="5" ry="3" fill="${b}" opacity=".85" transform="rotate(25 9 21)"/>`)+C(16,8,3.4,sk)+P("M13 13h6l-1 12h-4z",a),
+butterfly:(a,b)=>M(E(9,11,7.5,6.5,a)+E(10,22,5.5,5,b))+R(15,8,2,18,K,1)+L("M16 8l-3-4M16 8l3-4",K,1),
+tree:(a,b)=>R(14,19,4,10,"#6a4a2a")+C(16,12,10,a)+C(10,16,6,a)+C(22,16,6,a)+C(13,9,3,b),
+stag:(a,b)=>S("M9 14L6 5M7 9L3 8M23 14l3-9M25 9l4-1M9 11l4-3M23 11l-4-3",b,2)+C(16,19,9,a)+E(16,24,5,4,sk)+EY(17,K,12.5,1.2)+C(16,24,1.4,K),
+flower:(a,b)=>{let r=L("M16 18v12","#4f8a3a",2.4);for(let i=0;i<6;i++)r+=rot(E(16,8.5,3.3,5.2,a),i*60,16,14);return r+C(16,14,3.2,b)},
+ghost:(a,b)=>P("M5 29V14C5 7 10 3 16 3s11 4 11 11v15l-4-3-3 3-4-3-4 3-3-3z",a)+EY(14,K,12,2)+E(16,21,2.5,3,K),
+note:(a,b)=>C(10,24,4.5,a)+S("M14 24V6l12-3v16",a,2.6)+C(22,19,4,a),
+vamp:(a,b)=>C(16,17,10,"#e9e3ee")+P("M6 16C6 7 11 3 16 3s10 4 10 13c-3-4-6-6-10-3-4-3-7-1-10 3z",a)+EY(17,"#e03030",12.5,1.3)+P("M13 23l1 4 1-4zM17 23l1 4 1-4z",W),
+coffin:(a,b)=>P("M11 2h10l6 9-3 19H8L5 11z",a)+L("M16 8v18M11 13h10",b,2),
+tomb:(a,b)=>P("M7 30V13C7 6 11 3 16 3s9 3 9 10v17z",a)+L("M16 9v10M12 13h8",b,2)+R(4,28,24,3,b),
+bone:(a,b)=>S("M7 25L25 7",a,4)+C(6,22,3.2,a)+C(10,26,3.2,a)+C(22,6,3.2,a)+C(26,10,3.2,a),
+horse:(a,b)=>P("M11 3l3 5c6 1 10 5 11 11l1 10h-9l-1-6-4 1-4-9c-1-5 0-8 3-12z",a)+P("M11 3c-4 4-6 9-4 16l4-2z",b)+C(15,13,1.4,K),
+unicorn:(a,b)=>G.horse(a,b)+P("M13 1l3 7-5 0z","#ffd966"),
+bear:(a,b)=>C(7,7,4.5,a)+C(25,7,4.5,a)+C(16,17,12,a)+E(16,21,6,4.5,b)+C(16,19.5,1.8,K)+EY(14,K,11.5,1.3),
+cloud:(a,b)=>C(10,19,6,a)+C(17,14,8,a)+C(24,20,5.5,a)+R(6,19,22,6,a,3),
+cat:(a,b)=>M(P("M16 9L11 9 5 3l-1 12 3 6-3 6 7 4 5 0z",a))+EY(15,"#9ee05a",11,1.5)+EY(15,K,11,.6)+P("M16 21l-2 2h4z","#f4a8be")+L("M3 22l-3 1M3 24l-3 3M29 22l3 1M29 24l3 3",K,.9),
+elephant:(a,b)=>C(5,15,6.5,a)+C(27,15,6.5,a)+C(16,14,9.5,a)+S("M16 20c0 6-2 8-4 10",a,4.4)+M(P("M10 22l-3 7 5-4z",W))+EY(13,K,12.5,1.2),
+star:(a,b)=>P("M16 2l4 9 10 1-7.5 6.5L24.5 29 16 24l-8.5 5L9.5 18.5 2 12l10-1z",a)+C(16,16,3,b),
+sack:(a,b)=>P("M11 3h10l-2 5c5 3 8 8 8 14 0 5-4 7-11 7S5 27 5 22c0-6 3-11 8-14z",a)+L("M11 9h10",b,2.4)+`<text x="16" y="24" font-size="11" text-anchor="middle" fill="${b}" font-family="Georgia,serif" font-weight="700" stroke="none">$</text>`,
+key:(a,b)=>C(9,10,6.5,a)+C(9,10,2.6,K)+S("M14 15l14 14M22 23l4-4M26 27l3-3",a,3.2),
+candle:(a,b)=>R(11,12,10,17,"#f1e3b8",2)+L("M16 12V9",K,1.4)+P("M16 2c1 3 4 4 4 7a4 4 0 01-8 0c0-2 2-3 3-5z","#ffb347")+E(16,29,8,2,a),
+heart:(a,b)=>P("M16 29C4 20 2 12 6 7s10-3 10 3c0-6 6-8 10-3s-2 13-10 19z",a)+L("M8 10q2-3 5-1",b,1.8),
+brokenheart:(a,b)=>G.heart(a,b)+L("M16 8l-3 6 4 4-3 7",K,1.6),
+bomb:(a,b)=>C(15,19,11,"#3a3340")+C(11,15,3,"#6a6078")+S("M22 10l4-4",b,2)+P("M26 2l2 4 4 1-4 2-1 4-2-4-4-1 4-2z","#ffb347"),
+scroll:(a,b)=>R(6,6,20,20,"#efe3c6",2)+E(16,6,10,3,b)+E(16,26,10,3,b)+L("M10 12h12M10 16h12M10 20h8",a,1.6),
+book:(a,b)=>R(5,4,22,24,a,2)+R(5,4,4,24,b,1)+L("M12 10h11M12 14h11",W,1.6),
+swords:(a,b)=>S("M5 5l18 18M27 5L9 23","#d8dde3",3)+L("M18 24l4-4M14 24l-4-4",a,2.6)+L("M20 20l6 6M12 20l-6 6","#8a5a2e",3),
+wand:(a,b)=>S("M6 27L22 11","#7a4a24",3.2)+P("M24 2l2 5 5 1-4 3 1 5-4-3-5 2 2-5-3-4 5 0z",a),
+gem:(a,b)=>P("M8 5h16l6 8-14 16L2 13z",a)+P("M8 5h16l-4 8H12z",b)+L("M2 13h28M12 13l4 16M20 13l-4 16",K,.9),
+urn:(a,b)=>P("M11 3h10v4c-1 2 6 5 6 13 0 6-4 10-11 10S5 26 5 20c0-8 7-11 6-13z",a)+R(10,2,12,3,b,1)+L("M7 18h18",b,2),
+door:(a,b)=>P("M6 29V12C6 6 10 3 16 3s10 3 10 9v17z",a)+L("M16 3v26M6 17h20",b,1.4)+C(21,18,1.3,"#e0b23a"),
+lock:(a,b)=>S("M9 14V10a7 7 0 0114 0v4",b,3)+R(5,14,22,15,a,3)+C(16,21,2.4,K),
+trap:(a,b)=>R(3,24,26,5,"#6a5a4a",1)+P("M5 24l3-14 3 14zM13 24l3-18 3 18zM21 24l3-14 3 14z","#cfd6dd"),
+pit:(a,b)=>E(16,17,14,10,"#6a5a4a")+E(16,18,11,7,K)+E(16,19,7,4,"#000"),
+ring:(a,b)=>S("M16 29a9 9 0 110-18 9 9 0 010 18z",a,3.2)+P("M16 3l5 6-5 4-5-4z",b),
+ladder:(a,b)=>S("M9 3v26M23 3v26",a,3)+L("M9 8h14M9 14h14M9 20h14M9 26h14",a,2.6),
+bridge:(a,b)=>R(2,13,28,7,a,1)+L("M7 13V6M16 13V6M25 13V6M7 6h18",b,2)+L("M2 24q14-8 28 0",K,1.4),
+barrel:(a,b)=>P("M7 3h18c3 6 3 20 0 26H7C4 23 4 9 7 3z",a)+L("M5 10h22M5 22h22",b,2.2)+L("M16 3v26",K,.8),
+fountain:(a,b)=>E(16,26,13,4,a)+R(14,14,4,12,a)+P("M16 3q-6 5-7 9h14q-1-4-7-9z",b)+E(16,14,9,2.5,a),
+web:(a,b)=>L("M16 2v28M2 16h28M5 5l22 22M27 5L5 27",a,1.2)+L("M16 8q8 0 8 8t-8 8-8-8 8-8M16 13q3 0 3 3t-3 3-3-3 3-3",a,1.2),
+bell:(a,b)=>P("M16 3c-5 0-8 4-8 10v7l-3 4h22l-3-4v-7c0-6-3-10-8-10z",a)+C(16,27,2.8,b)+C(16,4,1.8,b),
+mug:(a,b)=>R(6,8,17,20,a,3)+S("M23 12h3a3 3 0 010 10h-3",a,2.6)+P("M6 8c0-4 4-5 6-3 2-3 7-2 7 3z",W)+L("M10 14v10",b,1.4),
+brick:(a,b)=>R(2,6,28,20,a,1)+L("M2 13h28M2 20h28M10 6v7M22 6v7M16 13v7M8 20v6M24 20v6",b,1.4),
+tent:(a,b)=>P("M2 28L16 4l14 24z",a)+P("M16 4l14 24H21z",b)+P("M16 28v-10l-4 10z",K),
+snowman:(a,b)=>C(16,24,8,a)+C(16,13,6,a)+R(9,6,14,2.4,"#3a3340")+R(11.5,1,9,6,"#3a3340")+C(14,12,.9,K)+C(18,12,.9,K)+P("M16 14l5 1-5 1z","#ff8a1f")+C(16,22,1,K)+C(16,26,1,K),
+gift:(a,b)=>R(4,12,24,17,a,1.5)+R(2,8,28,6,a,1.5)+R(14,8,4,21,b)+P("M16 8c-4-6-9-4-7 0zM16 8c4-6 9-4 7 0z",b),
+pine:(a,b)=>R(14.5,24,3,6,"#6a4a2a")+P("M16 2l8 10h-4l7 8h-5l6 6H4l6-6H5l7-8H8z",a)+P("M16 2l4 5-4 1-4-1zM9 14l3-2 4 3 4-3 3 2-7 3z",b),
+gingerbread:(a,b)=>C(16,7,5,a)+P("M10 13h12l7 4-2 4-5-2v10h-4l-1-6-1 6h-4V19l-5 2-2-4z",a)+C(14,6,.9,W)+C(18,6,.9,W)+C(16,17,1.2,b)+C(16,22,1.2,b),
+pumpkin:(a,b)=>R(14.5,2,3,6,"#4d7a3a",1)+E(16,19,13,10.5,a)+L("M16 8q-8 11 0 22M16 8q8 11 0 22",K,1)+P("M10 16l3 3-4 1zM22 16l-3 3 4 1zM11 23q5 4 10 0l-2-2-2 2-2-2z",K),
+bunny:(a,b)=>E(10,8,3.4,8,a)+E(22,8,3.4,8,a)+E(10,9,1.5,5,"#f4a8be")+E(22,9,1.5,5,"#f4a8be")+C(16,21,9.5,a)+EY(20,K,12.5,1.2)+C(16,24,1.4,"#f4a8be"),
+chick:(a,b)=>C(16,17,12,a)+P("M14 19l2 3 2-3z",b)+EY(15,K,12,1.4)+L("M16 5q-2-4-4-2M16 5q1-4 4-3",a,1.5),
+egg:(a,b)=>P("M16 2C9 2 5 13 5 20a11 11 0 0022 0C27 13 23 2 16 2z",a)+L("M6 17q5 3 10 0t10 0",b,2)+L("M6 23q5 3 10 0t10 0",b,2),
+sheep:(a,b)=>C(8,14,6,a)+C(16,10,7,a)+C(24,14,6,a)+C(12,20,6,a)+C(21,20,6,a)+E(16,19,6,6.5,b)+EY(18,W,13.5,1),
+basket:(a,b)=>S("M7 14c0-9 18-9 18 0",a,2.6)+P("M4 14h24l-3 15H7z",a)+L("M5 19h22M6 24h20M11 14l1 15M16 14v15M21 14l-1 15",b,1.1),
+carrot:(a,b)=>P("M16 10c6 2 9 6 7 10L9 29c-3-5-2-14 7-19z",a)+S("M15 9l-3-6M17 8l1-6M19 10l4-4",b,2.4),
+envelope:(a,b)=>R(3,7,26,19,a,2)+L("M3 9l13 10L29 9",b,1.8),
+angel:(a,b)=>M(P("M14 15C8 8 3 9 2 14c3 0 5 2 5 5-1 2-1 4 0 6 3-2 6-1 7 2z",W))+`<ellipse cx="16" cy="4.5" rx="6" ry="2" fill="none" stroke="#ffd966" stroke-width="1.6"/>`+C(16,13,5.5,sk)+P("M10 31c0-8 3-10 6-10s6 2 6 10z",a)+EY(12.5,K,14,.9),
+d20:(a,b)=>P("M16 2l12 7v14l-12 7L4 23V9z",a)+L("M16 2L4 23h24zM4 9l12 8 12-8M16 17v13",b,1),
+dice:(a,b)=>R(4,4,24,24,a,4)+C(10,10,2.2,b)+C(22,10,2.2,b)+C(10,22,2.2,b)+C(22,22,2.2,b)+C(16,16,2.2,b),
+map:(a,b)=>P("M2 7l9-3 10 3 9-3v21l-9 3-10-3-9 3z",a)+L("M11 4v21M21 7v21",b,1.2),
+plus:(a,b)=>P("M13 3h6v10h10v6H19v10h-6V19H3v-6h10z",a),
+upload:(a,b)=>P("M16 3l10 11h-6v9h-8v-9H6z",a)+R(5,26,22,3,a,1),
+pencil:(a,b)=>P("M5 27l2-7L22 5l5 5L12 25z",a)+P("M5 27l2-7 5 5z",b),
+brush:(a,b)=>S("M27 4L14 17",b,3.4)+P("M12 16c4 0 6 3 5 6-1 4-6 6-11 6 2-3 1-7 3-9z",a),
+spray:(a,b)=>R(8,12,10,17,a,2)+R(10,6,6,6,b,1)+C(23,8,1.2,a)+C(26,12,1.2,a)+C(24,16,1.2,a)+C(27,6,1,a),
+eraser:(a,b)=>P("M3 21L15 7l12 10-9 12H10z",a)+P("M3 21l7 8h8l-8-9z",b),
+bucket:(a,b)=>P("M5 17l10-10 10 10-8 9H11z",a)+P("M24 18q4 6 0 8-4-2 0-8z",b)+L("M14 7V3",K,1.4),
+trash:(a,b)=>R(7,9,18,20,a,2)+R(5,5,22,4,a,1)+L("M12 13v12M16 13v12M20 13v12",b,1.6)
+};
+const GM=`hood:🥷 🕵
+wizard:🧙 🧹
+orb:🔮
+eye:👁
+sun:🙏
+shield:🛡
+helm:🤺 💂 👮 🏰
+axe:🪓
+face:🥋 🧒 🧑 😍 🧑‍🌾 🧑‍🍳
+bow:🏹
+leaf:🌿 🍃 🌱
+lute:🎻 🧑‍🎤
+gear:🧑‍🔧
+elf:🧝
+dwarf:🧔 🎅
+horned:😈 👿 🐐 🦏 🐃
+dragon:🐲 🐉 🦖
+fish:🧜 🦈
+flame:🔥 🧞
+dagger:🗡
+crown:👑 🪑
+cross:🧑‍⚕ 🧑‍⚖
+goblin:👺
+brute:🦍 🐒
+orc:🐗 👹 🧌
+lizard:🦎 🐊
+frog:🐸
+wolf:🐺 🐕
+spider:🕷
+golem:🗿 🤖
+cube:🧊
+flag:🏴
+burst:💥
+tentacle:🦑 🐙
+scorpion:🦂 🦞
+worm:🐛
+bug:🐜 🦟 🐝 🐞
+bat:🦇
+rat:🐀
+snake:🐍
+shroom:🍄
+blob:🟢
+chest:🧰
+fang:🦷
+bird:🦅 🦉 🐓 🕊
+lion:🦁
+snow:❄
+bolt:⚡
+potion:🧪
+coin:🪙 🥈 🥉
+moon:🌙 🌑 🌕
+skull:💀 ☠ 🧟
+drop:💧 🌊
+wind:🌪 💨
+rock:🪨 🌋
+fairy:🧚
+butterfly:🦋
+tree:🌳
+stag:🦌
+flower:🌷 🌸 🌼 🌹
+ghost:👻
+note:🎶
+vamp:🧛
+coffin:⚰
+tomb:🪦
+bone:🦴
+horse:🐴 🐎
+unicorn:🦄
+bear:🐻
+cloud:☁
+cat:🐆 🐅 🐈
+elephant:🐘
+star:🌟 ✨
+sack:💰 🧑‍💼
+key:🗝
+candle:🕯
+heart:❤ 💖 💘
+brokenheart:💔
+bomb:💣
+scroll:📜
+book:📚 🧑‍🏫
+swords:⚔
+wand:🪄 🔱
+gem:💎
+urn:🏺
+door:🚪
+lock:🔒
+trap:⚠
+pit:🕳
+ring:⛓ 💍
+ladder:🪜
+bridge:🌉
+barrel:🛢
+fountain:⛲
+web:🕸
+bell:🔔
+mug:🍺 🍷
+brick:🧱 🍫
+tent:⛺
+snowman:⛄
+gift:🎁
+pine:🎄
+gingerbread:🍪
+pumpkin:🎃
+bunny:🐰 🐇
+chick:🐣 🐤
+egg:🥚
+sheep:🐑
+basket:🧺
+carrot:🥕
+envelope:💌
+angel:😇`;
+const norm=e=>String(e||"").replace(/\uFE0F/g,"");
+const EG={};
+GM.split("\n").forEach(l=>{const i=l.indexOf(":");l.slice(i+1).trim().split(/\s+/).forEach(e=>EG[norm(e)]=l.slice(0,i))});
+const gname=e=>{const k=norm(e);return EG[k]||EG[[...k][0]]||"star"};
+const svg=(name,a,b,ol)=>{const f=G[name]||G.star;return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><g${ol===false?"":` stroke="${K}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"`}>${f(a,b)}</g></svg>`};
+const url=(name,a,b)=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg(name,a,b));
+const imgs={};
+const img=(name,a,b)=>{const k=name+a+b;if(!imgs[k]){const i=new Image();i.src=url(name,a,b);imgs[k]=i}return imgs[k]};
+return {G,svg,url,img,gname,norm,EG};
+})();
+const ico=g=>`<i class="ic">${ART.svg(g,"currentColor","currentColor",false)}</i>`;
+document.querySelectorAll("i.ic[data-g]").forEach(i=>{i.innerHTML=ART.svg(i.dataset.g,"currentColor","currentColor",false)});
+const hs=t=>[...String(t)].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
+const PR=[[/fire|flame|red|ember|magma|lava|devil|balor|imp\b|pit|horned|santa|cupid|rose|crimson/i,"#c8402a","#ffb347"],[/frost|ice|snow|white|winter|polar|ghost|wraith|silver/i,"#8cc4de","#eef7fb"],[/green|poison|goblin|frog|toad|drake|ooze|myconid|druid|dryad|treant|twig|forest|lizard|kobold|bullywug|hag|troll|zombie|ghoul|sprout|violet/i,"#5f9e46","#b5dc7a"],[/gold|treasure|coin|hoard|solar|deva|planetar|noble|king/i,"#e0b23a","#fff1a8"],[/black|shadow|death|vampire|lich|dracolich|nightmare|cat|bat|mind|assassin|rogue|drow|wight|skeleton/i,"#4a4256","#9a8ab0"],[/blue|storm|water|kraken|triton|nixie|moon|mage|wizard|witch|sorcerer/i,"#3f78c8","#a9cdf5"],[/bronze|copper|brass|barrel|chest|key|boar|horse|stag|elk|bear/i,"#a8683a","#e0b27a"]];
+const PAL2=[["#c0392b","#f3b27a"],["#2e86c1","#aed6f1"],["#27ae60","#a9dfbf"],["#8e44ad","#d2b4de"],["#d68910","#f9e79f"],["#5d6d7e","#d5d8dc"],["#a04000","#e59866"]];
+const TP=[[["#a8683a","#e0b27a"],["#3f78c8","#a9cdf5"],["#8a6a2a","#f0d890"]],[["#c0392b","#f5e6c8"],["#2d6a4a","#eef6fa"],["#e0b23a","#fff1a8"]],[["#e8742a","#ffd36b"],["#6a4a7a","#c9a8e8"],["#3a3340","#a898b8"]],[["#f2a0c4","#ffffff"],["#9fd6b5","#fff7b8"],["#c9a8e8","#ffe08a"]],[["#d6456f","#ffd1dc"],["#f08aa8","#ffffff"],["#b3203f","#f4a8be"]]];
+function pal(d){
+  if(d.cat==="Themed"){const t=TP[TI()];return t[hs(d.n)%t.length]}
+  for(const [r,a,b] of PR)if(r.test(d.n))return[a,b];
+  return PAL2[hs(d.n)%PAL2.length];
+}
+const BP={"🔥":["#e8742a","#ffd36b"],"❄":["#8cc4de","#ffffff"],"⚡":["#f2c230","#fff3a0"],"🧪":["#6fbf5a","#d6f5c2"],"🪙":["#e0b23a","#fff1a8"],"🥈":["#aeb7c2","#ffffff"],"🥉":["#b9733a","#e8b98a"],"💀":["#e9e1cf","#b9ae96"],"☠":["#e9e1cf","#b9ae96"],"🌑":["#4a4256","#9a8ab0"],"🌕":["#f1e2a0","#fff8d0"],"🌙":["#f1e2a0","#fff8d0"],"❤":["#d6322a","#ff8a8a"],"✨":["#ffd966","#ffffff"],"☁":["#dfe8ee","#ffffff"],"🌿":["#5f9e46","#b5dc7a"],"🌸":["#f2a0c4","#ffffff"],"🌷":["#f2a0c4","#ffffff"],"👑":["#e0b23a","#fff1a8"],"🛡":["#aeb7c2","#e8eef4"],"⚔":["#c9d0d8","#8a5a2e"],"🗡":["#d8dde3","#8a5a2e"],"🏹":["#8a5a2e","#d8c8a8"],"🕷":["#3a3340","#a898b8"],"🐍":["#5f9e46","#b5dc7a"],"🦁":["#d9a45a","#8a5a2e"],"🦉":["#8a6a4a","#e8d8b8"],"🐉":["#b33a2a","#ffcf40"],"🔮":["#8e44ad","#d2b4de"],"🦷":["#fff4d6","#d8c8a8"],"🔒":["#c8962e","#8a6a1a"],"🎶":["#6a8ad0","#ffffff"],"💥":["#f2a030","#ffe08a"],"🌊":["#3f78c8","#a9cdf5"]};
+const artURL=d=>{const [a,b]=d.pa||pal(d);return ART.url(ART.gname(d.e),a,b)};
+const badgeURL=k=>{const [a,b]=BP[ART.norm(k)]||["#d9c08a","#ffffff"];return ART.url(ART.gname(k),a,b)};
+const tileArt=(d,bc)=>`<img class="ta" src="${artURL(d)}" alt="">`+(d.b?`<img class="${bc||"tbd"}" src="${badgeURL(d.b)}" alt="">`:"");
+
+/* ---------- battle maps ---------- */
+const THN=["Original","Christmas","Halloween","Easter","Valentine"],TI=()=>Math.max(0,THN.indexOf(state.theme));
+const FL={dungeon:["#8a8174","#b9c9d6","#4a3a5a","#d9cbe8","#e8aab8"],tavern:["#a07848","#b88a5a","#5a3f45","#e6cfa8","#d9899a"],plains:["#8fae6a","#eef4f8","#3a2f45","#bfe6b0","#f2c9d4"],forest:["#6f9a55","#dbe6ea","#2e2a3a","#a6d896","#e9b6c4"],mountains:["#a09a8c","#dfe8ee","#4a4050","#c9bfd9","#e0a8b8"],swamp:["#6b7a4a","#b8c9c0","#2f3a2c","#a8d0a0","#d9a0b0"]};
+const WL=["#3d362f","#5b6f80","#1b1222","#8f7bb5","#7a2a3f"],WT=["#4f86a8","#9fd0e6","#3b6b4a","#7cc4e0","#c85a86"],ACC=["#b3202a","#2d6a3f","#ff8a1f","#e08fb5","#d6456f"];
+const OB={
+ tree:[["tree","#4f8a3a","#7fb257"],["pine","#2f6b4a","#eef6fa"],["dead","#5a4a66","#8a7a96"],["blossom","#f0a8c8","#7a5a3a"],["blossom","#e0527a","#7a3a4a"]],
+ rock:[["rock","#8a8f96","#b9bec4"],["rock","#c3d0da","#f4f9fc"],["tomb","#7a7384","#a79fb0"],["egg","#e4d2f2","#f2a0c4"],["heart","#e0527a","#ff9ab8"]],
+ bush:[["bush","#3f7a3a","#6fae52"],["bush","#2d6a4a","#d6322a"],["web","#cfc8da","#ffffff"],["flower","#f2a0c4","#ffd36b"],["flower","#d6456f","#7a3a4a"]],
+ barrel:[["barrel","#8a5a2e","#b98a52"],["barrel","#b3202a","#2d6a4a"],["urn","#6a4a7a","#a07ac8"],["basket","#d9a45a","#f2a0c4"],["mug","#c8962e","#d6456f"]],
+ shroom:[["shroom","#c0392b","#f3e9d2"],["shroom","#d6322a","#ffffff"],["shroom","#7a4aa0","#d9c3f0"],["shroom","#f2a0c4","#ffffff"],["shroom","#d6456f","#ffd1dc"]],
+ fire:[["fire","#e8742a","#ffd36b"],["fire","#e8742a","#ffd36b"],["fire","#e8742a","#ffd36b"],["fire","#e8742a","#ffd36b"],["fire","#e8742a","#ffd36b"]],
+ urn:[["urn","#a8683a","#d9a45a"],["cube","#9fd3ea","#eef7fb"],["urn","#6a4a7a","#a07ac8"],["egg","#e4d2f2","#f2a0c4"],["urn","#d6456f","#f0a0b8"]],
+ bones:[["bone","#e9e1cf","#b9ae96"],["bone","#e9e1cf","#b9ae96"],["skull","#e9e1cf","#b9ae96"],["flower","#c9a8e8","#ffd36b"],["brokenheart","#d6456f","#ffb3c6"]],
+ coffin:[["coffin","#7a5a3a","#a98a5a"],["gift","#b3202a","#f1c40f"],["coffin","#4a4256","#8b7aa0"],["basket","#d9a45a","#f2a0c4"],["envelope","#f4a8be","#d6456f"]]
+};
+OB.crate=OB.barrel;
+const obsImg=(o,ti)=>{const v=OB[o.k][ti];return ART.img(v[0],v[1],v[2])};
+let rdT=0;const redraw=()=>{clearTimeout(rdT);rdT=setTimeout(drawMap,40)};
+const SZ={S:12,M:18,L:26};
+let MAP=null,msz="M",showGrid=true,placed=[];
+const EMF='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+function genMap(sz,bio){
+  const C=SZ[sz],R=C,g=Array.from({length:R},()=>Array(C).fill(0)),obs=[],area=C*R;
+  const ri=(a,b)=>a+rnd(b-a+1),cl=(v)=>Math.max(0,Math.min(C-1,v));
+  const open=(x,y)=>{let n=0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const a=x+i,b=y+j;if(a>=0&&b>=0&&a<C&&b<R&&!g[b][a])n++}return n};
+  const taken=(x,y)=>obs.some(o=>o.x===x&&o.y===y);
+  const put=(k,n,min)=>{for(let i=0;i<n;i++)for(let t=0;t<80;t++){const x=rnd(C),y=rnd(R);if(!g[y][x]&&!taken(x,y)&&open(x,y)>=(min||0)){obs.push({x,y,k});break}}};
+  const blob=(t,n,len)=>{for(let i=0;i<n;i++){let x=rnd(C),y=rnd(R);for(let j=0;j<len;j++){g[y][x]=t;x=cl(x+rnd(3)-1);y=cl(y+rnd(3)-1)}}};
+  if(bio==="dungeon"){
+    g.forEach(r=>r.fill(1));const rooms=[],n=Math.round(area/45)+2,mx=Math.max(4,C>>2)+1;
+    for(let i=0;i<n*4&&rooms.length<n;i++){const w=ri(3,mx),h=ri(3,mx),x=ri(1,C-w-1),y=ri(1,R-h-1);
+      if(rooms.some(r=>x<r.x+r.w+1&&x+w+1>r.x&&y<r.y+r.h+1&&y+h+1>r.y))continue;
+      rooms.push({x,y,w,h});for(let j=y;j<y+h;j++)for(let k=x;k<x+w;k++)g[j][k]=0}
+    for(let i=1;i<rooms.length;i++){const a=rooms[i-1],b=rooms[i];let x=a.x+(a.w>>1),y=a.y+(a.h>>1);const bx=b.x+(b.w>>1),by=b.y+(b.h>>1);
+      while(x!==bx){g[y][x]=0;x+=Math.sign(bx-x)}while(y!==by){g[y][x]=0;y+=Math.sign(by-y)}}
+    put("pillar",n,8);put("urn",n,8);put("bones",Math.ceil(n/2),8);put("coffin",Math.max(1,n>>2),8);
+  }else if(bio==="tavern"){
+    for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(!x||!y||x===C-1||y===R-1)g[y][x]=1;
+    g[R-1][C>>1]=0;g[R-1][(C>>1)+1]=0;
+    for(let x=2;x<=C>>1;x++)obs.push({x,y:2,k:"bar"});
+    obs.push({x:C-3,y:0,k:"fire"});
+    for(let i=0;i<area/3&&obs.filter(o=>o.k==="table").length<Math.round(area/20);i++){const x=ri(2,C-3),y=ri(4,R-3);
+      if(obs.some(o=>o.k==="table"&&Math.abs(o.x-x)<2&&Math.abs(o.y-y)<2)||(y>=R-3&&Math.abs(x-(C>>1))<3))continue;obs.push({x,y,k:"table"})}
+    put("barrel",Math.ceil(area/60),5);
+  }else if(bio==="plains"){
+    if(area>150)blob(2,1,Math.round(area/14));
+    put("tree",Math.round(area/18));put("rock",Math.round(area/30));put("bush",Math.round(area/20));
+  }else if(bio==="forest"){
+    put("tree",Math.round(area/3.6));put("bush",Math.round(area/16));put("rock",Math.round(area/45));
+    const cx=C/2,cy=R/2,rad=C/5;for(let i=obs.length-1;i>=0;i--)if(Math.hypot(obs[i].x-cx,obs[i].y-cy)<rad)obs.splice(i,1);
+  }else if(bio==="mountains"){
+    blob(1,Math.ceil(area/60),Math.round(area/8));put("rock",Math.round(area/22));put("bush",Math.round(area/45));
+  }else{
+    blob(2,Math.ceil(area/50),Math.round(area/6));put("tree",Math.round(area/16));put("shroom",Math.round(area/20));put("rock",Math.round(area/50));
+  }
+  return {C,R,g,obs,bio,ti:TI(),noise:Array.from({length:R},()=>Array.from({length:C},()=>Math.random()))};
+}
+function drawMap(){
+  const m=MAP;if(!m)return;const cv=$("#mapCv"),S=48,ti=m.ti;
+  cv.width=m.C*S;cv.height=m.R*S;const c=cv.getContext("2d");
+  c.textAlign="center";c.textBaseline="middle";
+  const indoor=m.bio==="dungeon"||m.bio==="tavern";
+  for(let y=0;y<m.R;y++)for(let x=0;x<m.C;x++){
+    const t=m.g[y][x],n=m.noise[y][x],px=x*S,py=y*S;
+    if(t===1){
+      c.fillStyle=WL[ti];c.fillRect(px,py,S,S);c.fillStyle="rgba(255,255,255,.1)";c.fillRect(px,py,S,5);c.fillStyle="rgba(0,0,0,.18)";c.fillRect(px,py+S-5,S,5);
+      if(m.bio==="mountains"){c.fillStyle="rgba(0,0,0,.3)";c.beginPath();c.moveTo(px+3,py+S-6);c.lineTo(px+S*.4,py+7);c.lineTo(px+S*.6,py+S*.48);c.lineTo(px+S*.78,py+S*.28);c.lineTo(px+S-3,py+S-6);c.fill();c.fillStyle=ti===1?"#ffffff":"rgba(255,255,255,.4)";c.beginPath();c.moveTo(px+S*.4,py+7);c.lineTo(px+S*.52,py+S*.3);c.lineTo(px+S*.3,py+S*.3);c.fill()}
+    }else{
+      c.fillStyle=t===2?WT[ti]:FL[m.bio][ti];c.fillRect(px,py,S,S);
+      c.fillStyle=n>.66?"rgba(255,255,255,.08)":n<.25?"rgba(0,0,0,.08)":"transparent";c.fillRect(px,py,S,S);
+      if(t===2){c.strokeStyle="rgba(255,255,255,.4)";c.lineWidth=2;c.beginPath();c.arc(px+S*.35,py+S*.5,S*.14,Math.PI,0);c.arc(px+S*.65,py+S*.5,S*.14,Math.PI,0,true);c.stroke()}
+      else if(m.bio==="tavern"){c.strokeStyle="rgba(0,0,0,.2)";c.lineWidth=1.5;c.beginPath();c.moveTo(px,py+S/2);c.lineTo(px+S,py+S/2);c.stroke()}
+    }
+    if(showGrid){c.strokeStyle=indoor?"rgba(0,0,0,.28)":"rgba(0,0,0,.16)";c.lineWidth=1;c.strokeRect(px+.5,py+.5,S,S)}
+  }
+  m.obs.forEach(o=>{
+    const px=o.x*S,py=o.y*S,cx=px+S/2,cy=py+S/2;
+    c.save();c.shadowColor="rgba(0,0,0,.4)";c.shadowBlur=5;c.shadowOffsetY=2;
+    if(o.k==="pillar"){c.fillStyle=WL[ti];c.beginPath();c.arc(cx,cy,S*.38,0,7);c.fill();c.fillStyle="rgba(255,255,255,.25)";c.beginPath();c.arc(cx-4,cy-4,S*.2,0,7);c.fill()}
+    else if(o.k==="table"){c.fillStyle="#6b4a2a";c.beginPath();c.arc(cx,cy,S*.48,0,7);c.fill();c.shadowColor="transparent";c.fillStyle=ACC[ti];c.beginPath();c.arc(cx,cy,S*.34,0,7);c.fill();c.fillStyle="rgba(255,255,255,.35)";c.beginPath();c.arc(cx,cy,S*.12,0,7);c.fill()}
+    else if(o.k==="bar"){c.fillStyle="#5b3a1e";c.fillRect(px,py+4,S,S-8);c.shadowColor="transparent";c.fillStyle="rgba(255,255,255,.2)";c.fillRect(px,py+6,S,5)}
+    else if(OB[o.k]){const im=obsImg(o,ti);if(im.complete&&im.naturalWidth)c.drawImage(im,px+2,py+2,S-4,S-4);else im.addEventListener("load",redraw,{once:true})}
+    c.restore();
+  });
+}
+function fitCell(){const cv=$("#mapCv");if(MAP)$("#mapBox").style.setProperty("--cell",cv.clientWidth/MAP.C+"px")}
+function newMap(){
+  MAP=genMap(msz,$("#biome").value);curMapId=null;tag();
+  if(placed.length)toast("New map: tokens cleared");
+  clearToks();drawMap();fitCell();
+}
+function clearToks(){placed.forEach(p=>p.el.remove());placed=[]}
+const TL={
+ Adventurers:["🧙 Wizard","🔮 Sorcerer","👁️ Warlock","🙏 Cleric","🛡️ Paladin","🤺 Fighter","🪓 Barbarian","🥋 Monk","🥷 Rogue","🏹 Ranger","🌿 Druid","🎻 Bard","🧑‍🔧 Artificer","🧝 Elf","🧝+🌙 Moon Elf","🧔 Dwarf","🧒 Halfling","🐲 Dragonborn","😈 Tiefling","🧜 Triton","🧞 Genasi","🗡️ Assassin","💂 Town Guard","🕵️ Spy","👑 Noble","🧑‍⚕️ Healer"],
+ Humanoids:["👺 Goblin","👺+🗡️ Goblin Boss","🦍 Bugbear","🐗 Orc Warrior","🐗+🪓 Orc War Chief","👹 Ogre","🧌 Troll","🦎 Kobold","🐊 Lizardfolk","🐸 Bullywug","🐺 Gnoll","🧹 Hag","🧙+☠️ Cultist Mage","🥷+🔥 Fanatic","🕷️ Drider","🧝+🕷️ Drow","🗿 Stone Giant","🧊 Frost Giant","🔥+👹 Fire Giant","🏴 Bandit"],
+ Monsters:["👁️+💥 Beholder","🦑 Mind Flayer","🐙 Kraken","🕷️ Giant Spider","🦂 Giant Scorpion","🐛 Carrion Crawler","🐜 Giant Ant","🦟 Stirge","🐝 Giant Wasp","🦇 Giant Bat","🐀 Giant Rat","🐍 Giant Snake","🍄 Myconid","🍄+☠️ Violet Fungus","🗿 Stone Golem","🤖 Iron Golem","🧊 Gelatinous Cube","🟢 Green Ooze","🧰+🦷 Mimic","🦞 Rust Monster","🐓 Cockatrice","🦎 Basilisk","🦁+🦂 Manticore","🐐+🔥 Chimera","🐍+🐍 Hydra","🦅 Harpy"],
+ Dragons:["🐉+🔥 Red Dragon","🐉+❄️ White Dragon","🐉+⚡ Blue Dragon","🐉+🧪 Black Dragon","🐉+🌿 Green Dragon","🐉+🪙 Gold Dragon","🐉+🥈 Silver Dragon","🐉+🥉 Bronze Dragon","🐲+🔥 Red Wyrmling","🐲+❄️ White Wyrmling","🐲+🪙 Gold Wyrmling","🦖 Wyvern","🦎+🔥 Fire Drake","🐊+🐉 Dragon Turtle","🐲+🌑 Shadow Dragon","🐉+💀 Dracolich"],
+ "Fiends & Celestials":["😈 Pit Fiend","😈+🔥 Horned Devil","👿 Imp","👿+🗡️ Quasit","👹 Balor","🦇+👹 Vrock","🐐 Goristro","👹+🐍 Marilith","😇 Solar","😇+⚔️ Deva","😇+🛡️ Planetar","🦄 Unicorn","🕊️ Couatl","🌟 Star Guardian"],
+ "Elementals & Fey":["🔥 Fire Elemental","💧 Water Elemental","🌪️ Air Elemental","🪨 Earth Elemental","⚡ Storm Spirit","🧊 Ice Mephit","🌋 Magma Mephit","💨 Dust Mephit","🧚 Pixie","🧚+🌿 Dryad","🧚+🌊 Nixie","🐐 Satyr","🧝+🌸 Eladrin","🦋 Sprite","🌳 Treant","🍃 Twig Blight","🐸+👑 Frog Prince","🦌+🌿 Stag Lord","🌼 Blooming Shambler"],
+ Undead:["🧟 Zombie","🧟+🛡️ Zombie Guard","💀 Skeleton","💀+⚔️ Skeleton Warrior","💀+🏹 Skeleton Archer","👻 Ghost","👻+🎶 Banshee","👻+❄️ Wraith","🧛 Vampire","🧛+🦇 Vampire Spawn","☠️+🔮 Lich","☠️+👑 Death Knight","⚰️ Mummy","🪦 Wight","🦴 Bone Naga","🐴+🔥 Nightmare"],
+ Beasts:["🐺 Dire Wolf","🐺+❄️ Winter Wolf","🐻+🦉 Owlbear","🐻 Cave Bear","🐗 Giant Boar","🦅 Giant Eagle","🦅+🦁 Griffon","🦉 Giant Owl","🐴 Warhorse","🐴+☁️ Pegasus","🐎 Riding Horse","🐆 Panther","🐅 Sabertooth","🐅+✨ Displacer Beast","🐘 Mammoth","🦏 Rhinoceros","🐃 Aurochs","🐊 Giant Crocodile","🐍 Giant Constrictor","🐸 Giant Toad","🦈 Dire Shark","🦎 Giant Lizard","🐕 War Dog","🐈 Wildcat","🦌 Elk","🐒 Ape"],
+ Objects:["💰 Treasure Hoard","🪙 Gold Coins","🧰 Treasure Chest","🗝️ Dungeon Key","🔥 Campfire","🕯️ Candle","🧪+❤️ Healing Potion","🧪+☠️ Poison Vial","💣 Alchemist’s Fire","📜 Spell Scroll","📚 Spellbook","⚔️ Magic Sword","🛡️ Shield","🔱 Trident","🪄 Magic Wand","🔮 Crystal Ball","💎 Gemstone","🏺 Urn","🚪 Door","🚪+🔒 Locked Door","⚠️ Trap","🕳️ Pit Trap","⛓️ Chains","🪜 Ladder","🌉 Bridge","⚰️ Sarcophagus","🪦 Tombstone","🛢️ Barrel","🗿 Statue","⛲ Fountain","🕸️ Webs","🔔 Alarm Bell","🪑 Throne","🍺 Tankard","🧱 Wall Segment"]
+};
+const THEMED=[
+ ["🧑‍🎤 Minstrel","👑 King","🧑‍🔧 Blacksmith","🧑‍⚖️ Magistrate","🍺 Innkeeper","🧑‍🌾 Farmer","🧑‍💼 Merchant","🧑‍🍳 Cook","🧑‍🏫 Sage","👮 Watchman","⛺ Camp","🏰 Castle Guard"],
+ ["🎅 Santa Claus","🦌 Reindeer","⛄ Snow Golem","🧝 Workshop Elf","🎁 Gift Mimic","🎄 Treant","❄️ Frost Sprite","🔔 Bell Wraith","🧊 Ice Mephit","🐺+❄️ Winter Wolf","🐻‍❄️ Polar Bear","🧙+❄️ Frost Witch","🍪 Gingerbread Golem","👑+❄️ Frost Queen"],
+ ["🎃 Pumpkin Head","🦇 Bat Swarm","🕸️ Web","🧛 Vampire","🧟 Ghoul","👻 Specter","🧙 Witch","🐈‍⬛ Black Cat","💀 Skeleton","🕷️ Giant Spider","🧹 Hag","👹 Oni","🐺+🌕 Werewolf","🪦 Gravedigger"],
+ ["🐰 Hare","🐣 Chick","🥚 Egg","🌷 Bloom","🦋 Butterfly","🐑 Lamb","🐇 Rabbit","🧺 Basket","🥕 Carrot Golem","🐤 Griffon Chick","🌸 Blossom Fey","🐞 Giant Ladybug","🌱 Sprout","🧚+🌷 Spring Sprite"],
+ ["💘 Cupid","😈 Heartbreaker","💌 Love Letter","🌹 Rose Thorn","💖 Heart","🧚 Matchmaker","🕊️ Dove","🍫 Chocolate","💔 Heartbreak Wraith","🌹+🗡️ Rose Duelist","🎻 Serenader","🍷 Cup Bearer","😍 Charmed Thrall","💍 Ring Mimic"]
+];
+const RING={Adventurers:"#3a6fd0",Humanoids:"#8a6a2a","Monsters":"#b3202a",Dragons:"#d0702a","Fiends & Celestials":"#c0306a","Elementals & Fey":"#2aa0a0",Undead:"#7a4aa0",Beasts:"#4a8a3a",Objects:"#c8962e",Themed:"#d0488a",Mine:"#c8962e"};
+const split=t=>{const i=t.indexOf(" "),em=t.slice(0,i).split("+");return{e:em[0],b:em[1]||"",n:t.slice(i+1)}};
+let mine=[];try{mine=JSON.parse(localStorage.getItem("dice-mytokens")||"[]")}catch(e){}
+const saveMine=()=>{try{localStorage.setItem("dice-mytokens",JSON.stringify(mine))}catch(e){toast("Storage full: token not kept")}};
+const themedLabel=()=>TI()?THEMES[state.theme].label:"Townsfolk";
+function defsOf(cat){
+  if(cat==="Mine")return mine.map(t=>({...t,key:"my"+t.id}));
+  const list=cat==="Themed"?THEMED[TI()]:TL[cat];
+  return list.map((t,i)=>{const d={...split(t),key:cat.replace(/\W/g,"")+TI()+i,ring:RING[cat],cat};d.pa=pal(d);return d});
+}
+const allDefs=()=>Object.fromEntries([...Object.keys(TL),"Themed","Mine"].flatMap(c=>defsOf(c).map(d=>[d.key,d])));
+const sel=new Set();let tcat="Adventurers",activeKey=null;
+function buildCats(){
+  const o=Object.keys(TL).map(c=>[c,c]).concat([["Themed",themedLabel()],["Mine","My tokens ("+mine.length+")"]]);
+  $("#tCat").innerHTML=o.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");$("#tCat").value=tcat;
+}
+function buildGrid(){
+  const ds=defsOf(tcat),g=$("#tGrid");
+  g.innerHTML=ds.length?ds.map(d=>`<button class="tk${sel.has(d.key)?" sel":""}" data-k="${d.key}" title="${esc(d.n)}" aria-pressed="${sel.has(d.key)}"><span class="ti" style="--r:${d.ring}">${d.src?`<img src="${d.src}" alt="">`:tileArt(d)}</span>${esc(d.n)}${tcat==="Mine"?'<span class="x" data-del="'+d.id+'" title="Delete token">×</span>':""}</button>`).join(""):'<p class="empty">No custom tokens yet. Try Random, Draw or Upload.</p>';
+  $("#tCount").textContent=sel.size+" selected";
+}
+function tokEl(d){
+  const el=document.createElement("div");el.className="tok";el.title=d.n+" (double-click to remove)";el.style.setProperty("--r",d.ring);
+  el.innerHTML=d.src?`<img src="${d.src}" alt="">`:tileArt(d,"bd");
+  return el;
+}
+let zTop=10;
+function placeTok(d,x,y){
+  if(!MAP)return;const el=tokEl(d),p={d,x,y,el},box=$("#mapBox");
+  el.style.width=100/MAP.C+"%";pos(p);box.appendChild(el);placed.push(p);
+  el.onpointerdown=e=>{
+    if(e.button>0)return;e.preventDefault();
+    const r0=box.getBoundingClientRect(),ox=p.x-(e.clientX-r0.left)/r0.width*MAP.C,oy=p.y-(e.clientY-r0.top)/r0.height*MAP.R;
+    el.classList.add("drag");el.style.zIndex=++zTop;
+    const mv=ev=>{const r=box.getBoundingClientRect();
+      p.x=Math.max(0,Math.min(MAP.C,(ev.clientX-r.left)/r.width*MAP.C+ox));p.y=Math.max(0,Math.min(MAP.R,(ev.clientY-r.top)/r.height*MAP.R+oy));pos(p)};
+    const up=()=>{el.classList.remove("drag");removeEventListener("pointermove",mv);removeEventListener("pointerup",up);removeEventListener("pointercancel",up)};
+    addEventListener("pointermove",mv);addEventListener("pointerup",up);addEventListener("pointercancel",up);
+  };
+  const rm=()=>{el.remove();placed=placed.filter(q=>q!==p)};
+  el.ondblclick=rm;el.oncontextmenu=e=>{e.preventDefault();rm()};
+}
+function pos(p){p.el.style.left=p.x/MAP.C*100+"%";p.el.style.top=p.y/MAP.R*100+"%"}
+function freeCells(){
+  const occ=new Set(placed.map(p=>Math.floor(p.x)+","+Math.floor(p.y)));
+  MAP.obs.forEach(o=>{if(o.k!=="fire")occ.add(o.x+","+o.y)});
+  const f=[];for(let y=0;y<MAP.R;y++)for(let x=0;x<MAP.C;x++)if(!MAP.g[y][x]&&!occ.has(x+","+y))f.push([x,y]);return f;
+}
+function addActive(){
+  if(!MAP)return;const d=allDefs()[activeKey];if(!d)return toast("Click a token in the library first");
+  const f=freeCells();if(!f.length)return toast("The map is full");
+  const cx=MAP.C/2,cy=MAP.R/2,[x,y]=f.map(c=>[c,Math.hypot(c[0]+.5-cx,c[1]+.5-cy)+Math.random()*2]).sort((u,v)=>u[1]-v[1])[0][0];
+  placeTok(d,x+.5,y+.5);toast(d.n+" added to the map");
+}
+function scatter(){
+  const ds=allDefs(),keys=[...sel].filter(k=>ds[k]);if(!keys.length)return toast("Select some tokens first");
+  const occ=new Set(placed.map(p=>p.x+","+p.y));
+  MAP.obs.forEach(o=>{if(o.k!=="fire")occ.add(o.x+","+o.y)});
+  const free=[];for(let y=0;y<MAP.R;y++)for(let x=0;x<MAP.C;x++)if(!MAP.g[y][x]&&!occ.has(x+","+y))free.push([x,y]);
+  const n=Math.max(1,Math.min(10,+$("#tCopies").value||1));let c=0;
+  for(const k of keys)for(let i=0;i<n;i++){if(!free.length){toast("The map is full");return}
+    const [x,y]=free.splice(rnd(free.length),1)[0];placeTok(ds[k],x+.5,y+.5);c++}
+  toast(c+" token"+(c===1?"":"s")+" scattered");
+}
+/* random token */
+const ADJ=["Crimson","Shadow","Iron","Silver","Mossy","Frost","Ember","Gilded","Sly","Grim","Wild","Hollow"],BAD=["⚔️","🛡️","🏹","🔥","❄️","✨","☠️","🗡️","👑"],RC=["#3a6fd0","#b3202a","#4a8a3a","#c8962e","#8a4ad0","#d0702a","#2aa0a0","#d0488a"];
+function randomToken(){
+  const pool=["Adventurers","Humanoids","Monsters","Dragons","Fiends & Celestials","Elementals & Fey","Undead","Beasts","Themed","Themed"].flatMap(c=>defsOf(c));
+  const b=pick(pool),d={id:Date.now(),e:b.e,pa:b.pa,n:pick(ADJ)+" "+b.n,ring:pick(RC),b:b.b||(rnd(10)<6?pick(BAD):"")};
+  mine.unshift(d);saveMine();sel.add("my"+d.id);activeKey="my"+d.id;updAdd();tcat="Mine";buildCats();buildGrid();toast("Created: "+d.n);
+}
+/* upload */
+function addImage(img,name){
+  const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");
+  x.beginPath();x.arc(64,64,64,0,7);x.clip();const m=Math.min(img.width,img.height);
+  x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,128,128);
+  const d={id:Date.now(),src:c.toDataURL("image/png"),n:(name||"My token").slice(0,24),ring:"#c8962e"};
+  mine.unshift(d);saveMine();sel.add("my"+d.id);activeKey="my"+d.id;updAdd();tcat="Mine";buildCats();buildGrid();toast("Token added");
+}
+$("#tUp").onclick=()=>$("#tFile").click();
+$("#tFile").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>addImage(im,f.name.replace(/\.[^.]+$/,""));im.onerror=()=>toast("Could not read that image");im.src=r.result};r.readAsDataURL(f);
+};
+/* draw your own */
+const dOv=$("#drawOv"),dc=$("#dCv"),dx=dc.getContext("2d"),dr={tool:"brush",col:"#000000",hist:[]};
+const PAL=["#000000","#ffffff","#7f7f7f","#c3c3c3","#ed1c24","#ff7f27","#fff200","#22b14c","#00a2e8","#3f48cc","#a349a4","#ffaec9","#b97a57","#efe4b0","#b5e61d","#880015"];
+$("#dPal").innerHTML=PAL.map(c=>`<button class="sw${c===dr.col?" on":""}" data-c="${c}" style="background:${c}" aria-label="Colour ${c}"></button>`).join("");
+const dClear=()=>{dx.fillStyle="#fff";dx.fillRect(0,0,256,256)};
+const dSnap=()=>{dr.hist.push(dx.getImageData(0,0,256,256));if(dr.hist.length>25)dr.hist.shift()};
+function setCol(c){dr.col=c;$("#dCol").value=c;$("#dPal").querySelectorAll(".sw").forEach(b=>b.classList.toggle("on",b.dataset.c===c))}
+$("#dPal").onclick=e=>{const b=e.target.closest(".sw");if(b)setCol(b.dataset.c)};
+$("#dCol").oninput=e=>setCol(e.target.value);
+$("#dTools").onclick=e=>{const b=e.target.closest("button");if(!b)return;dr.tool=b.dataset.t;$("#dTools").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b))};
+let dDown=false,dLast=null;
+const dpos=e=>{const r=dc.getBoundingClientRect();return[(e.clientX-r.left)*256/r.width,(e.clientY-r.top)*256/r.height]};
+function dStroke(a,b){
+  const t=dr.tool,sz=+$("#dSz").value;
+  if(t==="spray"){for(let i=0;i<16;i++){const r=sz*1.5*Math.sqrt(Math.random()),an=Math.random()*6.283;dx.fillStyle=dr.col;dx.fillRect(b[0]+r*Math.cos(an),b[1]+r*Math.sin(an),1.6,1.6)}return}
+  dx.strokeStyle=t==="eraser"?"#fff":dr.col;dx.lineWidth=t==="pencil"?1.6:sz;dx.lineCap=dx.lineJoin="round";
+  dx.beginPath();dx.moveTo(a[0],a[1]);dx.lineTo(b[0]+.01,b[1]);dx.stroke();
+}
+function dFill(px,py){
+  px|=0;py|=0;const id=dx.getImageData(0,0,256,256),d=new Uint32Array(id.data.buffer),h=dr.col;
+  const col=((255<<24)|(parseInt(h.slice(5,7),16)<<16)|(parseInt(h.slice(3,5),16)<<8)|parseInt(h.slice(1,3),16))>>>0,tg=d[py*256+px];
+  if(tg===col)return;const st=[[px,py]];
+  while(st.length){const [x,y]=st.pop();if(x<0||y<0||x>255||y>255||d[y*256+x]!==tg)continue;d[y*256+x]=col;st.push([x+1,y],[x-1,y],[x,y+1],[x,y-1])}
+  dx.putImageData(id,0,0);
+}
+dc.onpointerdown=e=>{e.preventDefault();dc.setPointerCapture(e.pointerId);const p=dpos(e);dSnap();
+  if(dr.tool==="fill"){dFill(p[0],p[1]);return}dDown=true;dLast=p;dStroke(p,p)};
+dc.onpointermove=e=>{if(!dDown)return;const p=dpos(e);dStroke(dLast,p);dLast=p};
+dc.onpointerup=dc.onpointercancel=()=>{dDown=false};
+$("#dUndo").onclick=()=>{const h=dr.hist.pop();if(h)dx.putImageData(h,0,0)};
+$("#dClr").onclick=()=>{dSnap();dClear()};
+function openDraw(){dClear();dr.hist=[];$("#dName").value="";dOv.classList.add("show");$("#dName").focus()}
+function closeDraw(){dOv.classList.remove("show");$("#tDraw").focus()}
+$("#tDraw").onclick=openDraw;$("#dCancel").onclick=closeDraw;
+$("#dSave").onclick=()=>{addImage(dc,$("#dName").value.trim()||"My drawing");closeDraw()};
+dOv.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Escape")closeDraw()});
+/* wiring */
+$("#tCat").onchange=e=>{tcat=e.target.value;buildGrid()};
+$("#tGrid").onclick=e=>{
+  const x=e.target.closest("[data-del]");
+  if(x){e.stopPropagation();const id=+x.dataset.del;mine=mine.filter(t=>t.id!==id);sel.delete("my"+id);if(activeKey==="my"+id){activeKey=null;updAdd()}saveMine();buildCats();buildGrid();return}
+  const b=e.target.closest(".tk");if(!b)return;const k=b.dataset.k;
+  activeKey=k;updAdd();sel.has(k)?sel.delete(k):sel.add(k);b.classList.toggle("sel",sel.has(k));b.setAttribute("aria-pressed",sel.has(k));$("#tCount").textContent=sel.size+" selected";
+};
+$("#tAll").onclick=()=>{defsOf(tcat).forEach(d=>sel.add(d.key));buildGrid()};
+$("#tNone").onclick=()=>{sel.clear();buildGrid()};
+function updAdd(){const d=allDefs()[activeKey];$("#tAdd").innerHTML=ico("plus")+(d?"Add "+esc(d.n)+" to map":"Add token to map")}
+$("#tAdd").onclick=addActive;
+$("#tGrid").ondblclick=e=>{const b=e.target.closest(".tk");if(b){activeKey=b.dataset.k;updAdd();addActive()}};
+$("#tScatter").onclick=scatter;$("#tRand").onclick=randomToken;
+$("#mGen").onclick=newMap;$("#biome").onchange=newMap;
+$("#mClear").onclick=()=>{clearToks();toast("Tokens cleared")};
+$("#mGrid").onclick=e=>{showGrid=!showGrid;e.currentTarget.textContent="Grid: "+(showGrid?"on":"off");e.currentTarget.setAttribute("aria-pressed",showGrid);drawMap()};
+$("#szSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;msz=b.dataset.sz;$("#szSeg").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));newMap()};
+new ResizeObserver(fitCell).observe($("#mapCv"));
+function showPage(p){
+  $("#dicePage").hidden=p!=="dice";$("#mapPage").hidden=p!=="map";
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.p===p));
+  if(p==="map"){if(!MAP)newMap();fitCell()}
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>showPage(t.dataset.p));
+function mapTheme(){
+  if(MAP)MAP.ti=TI();
+  buildCats();buildGrid();drawMap();
+  $("#mapSub").textContent=state.theme==="Original"?"Generate a random map, then fill it with tokens to build your encounter.":THEMES[state.theme].sub;
+}
+const _applyTheme=applyTheme;applyTheme=function(n){_applyTheme(n);mapTheme()};
+buildCats();buildGrid();
+
+/* ---------- map library, saving, export ---------- */
+let mapsDb=[];try{mapsDb=JSON.parse(localStorage.getItem("dice-maps")||"[]")}catch(e){}
+function persistMaps(){try{localStorage.setItem("dice-maps",JSON.stringify(mapsDb));return true}catch(e){toast("Storage full: map not saved");return false}}
+let curMapId=null;
+const SZN={S:"Small",M:"Medium",L:"Large"},bioName=b=>b[0].toUpperCase()+b.slice(1);
+const taleName=v=>(v&&v.name)||"Untitled seed";
+const mapsOf=id=>mapsDb.filter(m=>m.seedId!=null&&String(m.seedId)===String(id));
+function tag(){const m=mapsDb.find(x=>x.id===curMapId);$("#mapTag").textContent=m?"Saved map: "+m.name:""}
+/* export */
+const loadImg=src=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
+async function mapCanvas(){
+  await Promise.all(MAP.obs.filter(o=>OB[o.k]).map(o=>{const im=obsImg(o,MAP.ti);return im.complete&&im.naturalWidth?0:new Promise(r=>{im.onload=im.onerror=r})}));drawMap();
+  const base=$("#mapCv"),S=base.width/MAP.C,c=document.createElement("canvas");c.width=base.width;c.height=base.height;
+  const x=c.getContext("2d"),bg=getComputedStyle(document.documentElement).getPropertyValue("--card2").trim()||"#f8f2e4";
+  x.drawImage(base,0,0);x.textAlign="center";x.textBaseline="middle";
+  for(const p of placed){
+    const d=p.d,cx=p.x*S,cy=p.y*S,r=S/2,lw=Math.max(2,S*.07),img=d.src?await loadImg(d.src):null;
+    x.save();x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=6;x.shadowOffsetY=2;x.fillStyle=bg;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.restore();
+    x.save();x.beginPath();x.arc(cx,cy,r,0,7);x.clip();
+    if(img)x.drawImage(img,cx-r,cy-r,S,S);
+    else{const ai=await loadImg(artURL(d));if(ai)x.drawImage(ai,cx-r*.78,cy-r*.78,S*.78,S*.78);if(d.b){const bi=await loadImg(badgeURL(d.b));if(bi)x.drawImage(bi,cx+r*.12,cy+r*.12,S*.36,S*.36)}}
+    x.restore();
+    x.strokeStyle=d.ring;x.lineWidth=lw;x.beginPath();x.arc(cx,cy,r-lw/2,0,7);x.stroke();
+  }
+  return c;
+}
+async function saveBlob(b,name){
+  const C=window.Capacitor;
+  if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.Filesystem&&C.Plugins.Share){
+    const data=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(",")[1]);fr.readAsDataURL(b)});
+    const w=await C.Plugins.Filesystem.writeFile({path:name,data,directory:"CACHE"});
+    await C.Plugins.Share.share({title:name,url:w.uri});return;
+  }
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$("#mExport").onclick=async()=>{
+  if(!MAP)return;const f=$("#exFmt").value,c=await mapCanvas();
+  const cur=mapsDb.find(m=>m.id===curMapId),nm=((cur&&cur.name)||"battle-map").replace(/[^\w\- ]+/g,"").trim()||"battle-map";
+  c.toBlob(async b=>{
+    if(!b)return toast("Export failed");
+    try{await saveBlob(b,nm+(f==="png"?".png":".jpg"));toast("Map exported as "+f.toUpperCase())}catch(err){toast("Export failed")}
+  },"image/"+f,.92);
+};
+/* save map dialog */
+const msOv=$("#msOv");
+function openMapSave(){
+  if(!MAP)return;const cur=mapsDb.find(m=>m.id===curMapId);
+  $("#msName").value=cur?cur.name:"";
+  $("#msTale").innerHTML='<option value="">Not attached (map library only)</option>'+state.saved.map(v=>`<option value="${v.id}">${esc(taleName(v))} (${esc(wordOf(v.label))})</option>`).join("");
+  $("#msTale").value=cur&&cur.seedId!=null?String(cur.seedId):"";
+  $("#msNew").hidden=!cur;$("#msOk").textContent=cur?"Update map":"Save map";
+  msOv.classList.add("show");$("#msName").focus();$("#msName").select();
+}
+function closeMapSave(){msOv.classList.remove("show");$("#mSave").focus()}
+async function commitMap(asNew){
+  const name=$("#msName").value.trim().slice(0,40)||"Untitled map",sid=$("#msTale").value;
+  const tale=sid?state.saved.find(v=>String(v.id)===sid):null;
+  const c=await mapCanvas(),t=document.createElement("canvas");t.width=260;t.height=Math.round(260*c.height/c.width);
+  t.getContext("2d").drawImage(c,0,0,t.width,t.height);
+  const rec={id:(!asNew&&curMapId)||Date.now(),name,seedId:tale?tale.id:null,date:new Date().toLocaleString([],{dateStyle:"medium",timeStyle:"short"}),sz:msz,bio:MAP.bio,ti:MAP.ti,thumb:t.toDataURL("image/jpeg",.7),
+    map:{C:MAP.C,R:MAP.R,g:MAP.g,obs:MAP.obs,noise:MAP.noise.map(r=>r.map(v=>Math.round(v*100)/100))},
+    tokens:placed.map(p=>({d:p.d,x:+p.x.toFixed(3),y:+p.y.toFixed(3)}))};
+  const backup=[...mapsDb],i=mapsDb.findIndex(m=>m.id===rec.id);
+  if(i>=0)mapsDb[i]=rec;else mapsDb.unshift(rec);
+  if(!persistMaps()){mapsDb=backup;return}
+  curMapId=rec.id;tag();closeMapSave();toast(tale?"Map saved to “"+taleName(tale)+"”":"Map saved");
+}
+$("#mSave").onclick=openMapSave;$("#msOk").onclick=()=>commitMap(false);$("#msNew").onclick=()=>commitMap(true);$("#msCancel").onclick=closeMapSave;
+msOv.addEventListener("keydown",e=>{
+  e.stopPropagation();
+  if(e.key==="Escape"){e.preventDefault();closeMapSave()}
+  else if(e.key==="Enter"&&e.target.id==="msName"){e.preventDefault();commitMap(false)}
+  else trapTab(e,msOv);
+});
+msOv.addEventListener("click",e=>{if(e.target===msOv)closeMapSave()});
+/* load a saved map */
+function loadMap(m){
+  MAP={...m.map,bio:m.bio,ti:m.ti};msz=m.sz;$("#biome").value=m.bio;
+  $("#szSeg").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.sz===msz));
+  clearToks();drawMap();fitCell();m.tokens.forEach(t=>placeTok(t.d,t.x,t.y));
+  curMapId=m.id;tag();
+}
+/* library overlay (all maps, or the maps of one tale) */
+const ml={open:false,seed:null},mlOv=$("#mlOv");
+function renderMapLib(){
+  const all=ml.seed==null,list=all?mapsDb:mapsOf(ml.seed),v=all?null:state.saved.find(x=>String(x.id)===String(ml.seed));
+  $("#mlT").textContent=all?"All maps":"Maps in “"+taleName(v)+"”";$("#mlTabs").hidden=!all;
+  $("#mlList").innerHTML=list.length?`<div class="mlgrid">${list.map(m=>{
+    const t=state.saved.find(x=>String(x.id)===String(m.seedId));
+    return `<div class="mli"><img src="${m.thumb}" alt="Preview of ${esc(m.name)}" data-open="${m.id}"><div class="mm"><b>${esc(m.name)}</b><small>${SZN[m.sz]} ${esc(bioName(m.bio))} · ${esc(m.date)}</small><small>${t?ico("book")+esc(taleName(t)):"Not attached to a tale"}</small></div><div class="mb"><button class="main" data-open="${m.id}">Open</button><button data-del="${m.id}">Delete</button></div></div>`}).join("")}</div>`
+   :`<p class="empty" style="text-align:center">${all?"No maps saved yet. Generate a map on the Battle Maps page and press “Save map”.":"No maps are attached to this tale yet. Save a map from the Battle Maps page and attach it to this tale."}</p>`;
+}
+function openMapLib(seed){ml.seed=seed==null?null:seed;renderMapLib();mlOv.classList.add("show");ml.open=true;$("#mlClose").focus()}
+function closeMapLib(){
+  if(!ml.open)return;mlOv.classList.remove("show");ml.open=false;
+  (sv.open?$("#svMaps"):bk.open?$("#bkClose"):$("#mLib")).focus();
+}
+function openSavedMap(id){
+  const m=mapsDb.find(x=>x.id===id);if(!m)return;
+  if(sv.open&&sv.dirty)saveSeedView();
+  mlOv.classList.remove("show");ml.open=false;
+  if(sv.open){svOv.classList.remove("show");sv.open=false;sv.dirty=false}
+  if(ov.classList.contains("show")){ov.classList.remove("show","on");bk.open=false;bk.locked=false;ctl.classList.remove("show")}
+  showPage("map");loadMap(m);toast("Opened “"+m.name+"”");
+}
+$("#mlList").onclick=e=>{
+  const o=e.target.closest("[data-open]");if(o)return openSavedMap(+o.dataset.open);
+  const d=e.target.closest("[data-del]");if(!d)return;
+  if(d.dataset.armed){
+    const id=+d.dataset.del;mapsDb=mapsDb.filter(m=>m.id!==id);persistMaps();
+    if(curMapId===id){curMapId=null;tag()}renderMapLib();if(sv.open)renderSvMaps();toast("Map deleted");
+  }else{d.dataset.armed="1";d.textContent="Press again";setTimeout(()=>{if(d.isConnected){delete d.dataset.armed;d.textContent="Delete"}},3000)}
+};
+$("#mlClose").onclick=closeMapLib;
+$("#mlTales").onclick=()=>{closeMapLib();if(!bk.open)openBook()};
+$("#mLib").onclick=()=>openMapLib(null);
+$("#bkMaps").onclick=()=>openMapLib(null);
+mlOv.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();closeMapLib()}else trapTab(e,mlOv)});
+/* maps inside the full-screen tale */
+function renderSvMaps(){
+  const ms=mapsOf(sv.id);
+  $("#svMaps").innerHTML=ico("map")+"View battle maps ("+ms.length+")";
+  $("#svMapList").innerHTML=ms.length?'<h2 class="svlbl">Battle maps</h2><div class="chips">'+ms.map(m=>`<button class="chip" data-mid="${m.id}" title="Open this map">${ico("map")}${esc(m.name)}</button>`).join("")+"</div>":"";
+}
+$("#svMapList").onclick=e=>{const b=e.target.closest("[data-mid]");if(b)openSavedMap(+b.dataset.mid)};
+$("#svMaps").onclick=()=>openMapLib(sv.id);
+
+const themeSel=$("#theme");
+Object.keys(THEMES).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=THEMES[k].label;themeSel.appendChild(o)});
+function applyTheme(name){
+  const T=THEMES[name];if(!T||rolling)return;
+  state.theme=name;themeSel.value=name;
+  if(T.id)document.documentElement.dataset.theme=T.id;else document.documentElement.removeAttribute("data-theme");
+  TABLES.forEach(t=>{t.base=T.items[t.key];syncTable(t)});
+  resetDice();setFx(name);
+  WORDS=T.words;
+  cat.innerHTML="";Object.keys(WORDS).forEach(k=>{const o=document.createElement("option");o.textContent=k;cat.appendChild(o)});
+  draw();
+  $(".sub").textContent=T.sub;
+  castLines=T.cast;doneLines=T.done;bubble.textContent=T.hello;
+  $("#seed").innerHTML="<h3>Your story seed</h3><p>Roll the dice to begin.</p>";
+  document.title="The Storyteller’s Dice"+(T.id?" – "+T.label:"");
+}
+themeSel.onchange=()=>applyTheme(themeSel.value);
+applyTheme("Original");
+(function(){let seen=false;try{seen=!!localStorage.getItem("dice-tutorial-seen")}catch(e){}if(!seen)openTut()})();
+/* swipe to turn pages on touch screens */
+(function(){
+  let x0=0,y0=0,t0=0;
+  bookEl.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now()},{passive:true});
+  bookEl.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;
+    if(Math.abs(dx)>50&&Math.abs(dy)<70&&Date.now()-t0<700)turn(dx<0?1:-1)},{passive:true});
+})();
+/* Android: hardware back button closes the top layer instead of quitting */
+(function(){
+  const C=window.Capacitor;if(!C||!C.isNativePlatform||!C.isNativePlatform())return;
+  document.documentElement.classList.add("native");
+  const App=C.Plugins&&C.Plugins.App;if(!App)return;
+  App.addListener("backButton",()=>{
+    if(addOv.classList.contains("show"))return closeAdd();
+    if(tut.open)return closeTut();
+    if(msOv.classList.contains("show"))return closeMapSave();
+    if(dOv.classList.contains("show"))return closeDraw();
+    if(ml.open)return closeMapLib();
+    if(sv.open)return closeSeedView();
+    if(nameOv.classList.contains("show"))return $("#nameCancel").click();
+    if(bk.open)return closeBook();
+    if(!$("#mapPage").hidden)return showPage("dice");
+    App.exitApp();
+  });
+})();
+</script>
+</body>
+</html>
